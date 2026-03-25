@@ -17,4 +17,10 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  runtimeConfig: {
+    // 服务器端私有配置
+    llmApiKey: process.env.LLM_API_KEY || '',
+    llmBaseURL: process.env.LLM_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    llmModel: process.env.LLM_MODEL || 'qwen-max',
+  },
 })
