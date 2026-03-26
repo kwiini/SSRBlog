@@ -3,6 +3,7 @@ declare module 'nitropack' {
     llmApiKey: string
     llmBaseURL: string
     llmModel: string
+    embeddingModel: string
   }
 }
 

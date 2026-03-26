@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-stone-50 text-stone-800 font-sans">
+  <div class="min-h-screen bg-stone-50 text-stone-800 font-sans flex flex-col">
     <!-- 自然风格导航栏 -->
-    <nav class="bg-white/70 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-50">
+    <nav class="bg-white/70 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-50 shrink-0">
       <div class="max-w-5xl mx-auto px-6">
         <div class="flex justify-between items-center h-14">
           <!-- Logo - 简洁自然 -->
@@ -28,20 +28,27 @@
               class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
               :class="{ 'bg-stone-100 text-stone-900': $route.path === '/chat' }"
             >
-              对话
+              知识库
+            </NuxtLink>
+            <NuxtLink 
+              to="/blog-vector" 
+              class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
+              :class="{ 'bg-stone-100 text-stone-900': $route.path === '/blog-vector' }"
+            >
+              向量化
             </NuxtLink>
           </div>
         </div>
       </div>
     </nav>
     
-    <!-- 主内容区 - 更紧凑的布局 -->
-    <main class="h-[calc(100vh-135px)] max-w-5xl mx-auto px-6 py-10">
+    <!-- 主内容区 - 自适应高度 -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-6 py-10">
       <NuxtPage />
     </main>
     
     <!-- 简约页脚 -->
-    <footer class="border-t border-stone-200/60 mt-auto">
+    <footer class="border-t border-stone-200/60 bg-stone-50 shrink-0">
       <div class="max-w-5xl mx-auto px-6 py-6">
         <div class="flex justify-between items-center text-sm text-stone-500">
           <p>© 2026 aissr</p>

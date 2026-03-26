@@ -1,4 +1,5 @@
 import { H3Event } from 'h3'
+import { ragQuery, retrieveContext, buildRAGPrompt } from "../utils/rag"
 
 interface LLMMessage {
   role: 'system' | 'user' | 'assistant'
@@ -6,7 +7,7 @@ interface LLMMessage {
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const { message, history = [] } = await readBody(event)
+  const { message, history = [], useRAG = true } = await readBody(event)
 
   if (!message || typeof message !== 'string') {
     throw createError({
@@ -27,16 +28,31 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  // 构建消息列表：系统提示 + 历史消息 + 当前用户消息
+  let userContent = message
+  let retrievedContext: any[] = []
+
+  // 如果启用 RAG，检索相关内容并构建 Prompt
+  if (useRAG) {
+    try {
+      const ragResult = await ragQuery(message, 3)
+      userContent = ragResult.prompt
+      retrievedContext = ragResult.context
+    } catch (error) {
+      console.error('RAG 检索失败:', error)
+      // 检索失败时仍使用原始问题
+    }
+  }
+
+  // 构建消息列表
   const messages: LLMMessage[] = [
     {
       role: 'system',
-      content: '你是一个有帮助的AI助手，请用中文回答问题。'
+      content: '你是一个有帮助的AI助手。当提供参考资料时，请基于这些资料回答问题；如果没有相关资料，请直接回答用户问题。'
     },
     ...history,
     {
       role: 'user',
-      content: message
+      content: userContent
     }
   ]
 
@@ -44,6 +60,15 @@ export default defineEventHandler(async (event: H3Event) => {
   setResponseHeader(event, 'Content-Type', 'text/event-stream')
   setResponseHeader(event, 'Cache-Control', 'no-cache')
   setResponseHeader(event, 'Connection', 'keep-alive')
+  
+  // 如果有检索结果，通过自定义响应头返回来源信息
+  if (retrievedContext.length > 0) {
+    const sources = JSON.stringify(retrievedContext.map(c => ({
+      title: c.metadata.title,
+      path: c.metadata.path
+    })))
+    setResponseHeader(event, 'X-Context-Sources', encodeURIComponent(sources))
+  }
 
   try {
     const response = await fetch(`${baseURL}/chat/completions`, {
@@ -87,7 +112,6 @@ export default defineEventHandler(async (event: H3Event) => {
               if (line.startsWith('data: ')) {
                 const data = line.slice(6)
                 
-                // 流结束标记
                 if (data === '[DONE]') {
                   controller.close()
                   return
@@ -98,10 +122,9 @@ export default defineEventHandler(async (event: H3Event) => {
                   const content = parsed.choices?.[0]?.delta?.content || ''
                   
                   if (content) {
-                    // 直接发送文本内容
                     controller.enqueue(encoder.encode(content))
                   }
-                } catch (e) {
+                } catch {
                   // 忽略解析错误
                 }
               }
@@ -110,15 +133,13 @@ export default defineEventHandler(async (event: H3Event) => {
           controller.close()
         } catch (error) {
           controller.error(error)
-        } finally {
-          reader.releaseLock()
         }
       }
     })
   } catch (error: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || 'Stream error'
+      statusMessage: error.message || '请求失败'
     })
   }
 })

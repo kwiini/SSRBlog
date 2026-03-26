@@ -23,7 +23,8 @@ logs
 .env.*
 !.env.example
 
-# Content files
-content/*
+# markdown files
+content/articles/*.md
 
+# trae configure
 .trae/*
