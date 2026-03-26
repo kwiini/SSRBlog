@@ -29,4 +29,7 @@ export default defineNuxtConfig({
     llmModel: process.env.LLM_MODEL || 'qwen-max',
     embeddingModel: process.env.EMBEDDING_MODEL || 'text-embedding-v3',
   },
+  nitro: {
+    preset: "vercel"
+  },
 })
