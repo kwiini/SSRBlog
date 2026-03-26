@@ -3,7 +3,7 @@
     <!-- 精致标题区 -->
     <div class="mb-10">
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-1 h-6 bg-gradient-to-b from-stone-700 to-stone-500 rounded-full"></div>
+        <div class="w-1 h-6 bg-linear-to-b from-stone-700 to-stone-500 rounded-full"></div>
         <h1 class="text-2xl font-semibold text-stone-800">博客向量化</h1>
       </div>
       <p class="text-sm text-stone-500 ml-4">将博客文章转换为向量，支持语义搜索和智能问答</p>
@@ -13,7 +13,7 @@
     <div class="bg-white border border-stone-200/60 rounded-2xl p-6 mb-6 shadow-sm">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+          <div class="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
             </svg>
@@ -88,7 +88,7 @@
     <!-- 搜索测试 -->
     <div class="bg-white border border-stone-200/60 rounded-2xl p-6 mb-6 shadow-sm">
       <div class="flex items-center gap-3 mb-5">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+        <div class="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
@@ -169,7 +169,7 @@
     <Transition name="fade">
       <div v-if="stats?.articles?.length" class="bg-white border border-stone-200/60 rounded-2xl p-6 shadow-sm">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-stone-600 to-stone-700 flex items-center justify-center shadow-sm">
+          <div class="w-10 h-10 rounded-xl bg-linear-to-br from-stone-600 to-stone-700 flex items-center justify-center shadow-sm">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
             </svg>

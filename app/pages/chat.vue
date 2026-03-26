@@ -5,7 +5,7 @@
       <div class="flex items-center gap-4">
         <div 
           class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition-all duration-300"
-          :class="useRAG ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-emerald-200' : 'bg-gradient-to-br from-stone-700 to-stone-900 shadow-stone-200'"
+          :class="useRAG ? 'bg-linear-to-br from-emerald-500 to-emerald-700 shadow-emerald-200' : 'bg-linear-to-br from-stone-700 to-stone-900 shadow-stone-200'"
         >
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="useRAG" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -46,7 +46,7 @@
       <!-- 欢迎消息 -->
       <Transition name="fade-scale">
         <div v-if="messages.length === 0" class="text-center py-16">
-          <div class="w-20 h-20 bg-gradient-to-br from-stone-100 to-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
+          <div class="w-20 h-20 bg-linear-to-br from-stone-100 to-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
             <svg class="w-10 h-10 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
             </svg>
@@ -83,8 +83,8 @@
             <div
               class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm"
               :class="msg.role === 'user' 
-                ? 'bg-gradient-to-br from-stone-700 to-stone-800' 
-                : 'bg-gradient-to-br from-emerald-500 to-emerald-600'"
+                ? 'bg-linear-to-br from-stone-700 to-stone-800' 
+                : 'bg-linear-to-br from-emerald-500 to-emerald-600'"
             >
               <span class="text-xs font-semibold text-white">
                 {{ msg.role === 'user' ? '我' : 'AI' }}
@@ -97,7 +97,7 @@
               <Transition name="fade">
                 <div 
                   v-if="msg.role === 'assistant' && msg.sources && msg.sources.length > 0" 
-                  class="mb-2 px-4 py-2.5 bg-gradient-to-r from-emerald-50/80 to-emerald-50 border border-emerald-100 rounded-t-2xl rounded-br-sm"
+                  class="mb-2 px-4 py-2.5 bg-linear-to-r from-emerald-50/80 to-emerald-50 border border-emerald-100 rounded-t-2xl rounded-br-sm"
                 >
                   <p class="text-xs text-emerald-600 mb-1.5 font-medium flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@
                 class="px-4 py-3 text-sm leading-relaxed shadow-sm"
                 :class="[
                   msg.role === 'user' 
-                    ? 'bg-gradient-to-br from-stone-800 to-stone-900 text-white rounded-2xl rounded-br-md' 
+                    ? 'bg-linear-to-br from-stone-800 to-stone-900 text-white rounded-2xl rounded-br-md' 
                     : 'bg-white border border-stone-200 text-stone-700 rounded-2xl rounded-bl-md',
                   msg.sources && msg.sources.length > 0 ? 'rounded-tl-sm' : ''
                 ]"
@@ -149,7 +149,7 @@
       <Transition name="fade">
         <div v-if="loading && !streaming" class="flex justify-start">
           <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+            <div class="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
               <span class="text-xs font-semibold text-white">AI</span>
             </div>
             <div class="bg-white border border-stone-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
@@ -167,7 +167,7 @@
     <!-- 输入区域 - 改进样式 -->
     <div class="border-t border-stone-200/60 pt-5">
       <div class="relative group">
-        <div class="absolute -inset-0.5 bg-gradient-to-r from-stone-200 to-stone-300 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur"></div>
+        <div class="absolute -inset-0.5 bg-linear-to-r from-stone-200 to-stone-300 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur"></div>
         <div class="relative flex items-end gap-2 bg-white border border-stone-200 rounded-xl p-2 focus-within:border-stone-400 focus-within:shadow-lg transition-all duration-300">
           <textarea
             v-model="inputMessage"

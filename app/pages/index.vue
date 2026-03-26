@@ -3,7 +3,7 @@
     <!-- 精致标题区 -->
     <div class="mb-12">
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-1 h-6 bg-gradient-to-b from-stone-700 to-stone-500 rounded-full"></div>
+        <div class="w-1 h-6 bg-linear-to-b from-stone-700 to-stone-500 rounded-full"></div>
         <h1 class="text-2xl font-semibold text-stone-800">
           文章
         </h1>
@@ -75,7 +75,7 @@
     <!-- 空状态 -->
     <Transition name="fade">
       <div v-if="!posts || posts.length === 0" class="text-center py-20">
-        <div class="w-20 h-20 bg-gradient-to-br from-stone-100 to-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
+        <div class="w-20 h-20 bg-linear-to-br from-stone-100 to-stone-200 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
           <svg class="w-10 h-10 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
