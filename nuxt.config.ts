@@ -8,8 +8,13 @@ export default defineNuxtConfig({
     '@nuxt/content'
   ],
   content: {
-    // 配置内容模块
-    // 使用默认配置，content 目录会自动被扫描
+    sources: {
+      content: {
+        driver: 'fs',
+        prefix: '/articles',
+        base: 'content/articles'
+      }
+    }
   },
   css: [
     '~/assets/css/main.css'

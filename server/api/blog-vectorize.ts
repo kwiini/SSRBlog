@@ -171,6 +171,78 @@ async function vectorizeAllBlogs(): Promise<VectorizedChunk[]> {
 }
 
 /**
+ * 向量化单篇文章（增量更新）
+ */
+async function vectorizeSinglePost(postPath: string): Promise<VectorizedChunk[]> {
+  // 加载现有向量
+  const existingStore = await loadVectors()
+  let existingChunks: VectorizedChunk[] = existingStore?.chunks || []
+
+  // 移除该文章的旧向量
+  existingChunks = existingChunks.filter(c => c.source !== postPath)
+
+  // 读取文章文件
+  const contentDir = join(process.cwd(), 'content')
+  const filePath = join(contentDir, postPath + '.md')
+
+  let content: string
+  try {
+    content = await fs.readFile(filePath, 'utf-8')
+  } catch {
+    throw new Error(`文章不存在: ${postPath}`)
+  }
+
+  // 解析 frontmatter
+  const { frontmatter, body } = parseMarkdown(content)
+  const title = frontmatter.title || postPath.split('/').pop() || 'Untitled'
+
+  console.log(`Processing single post: ${title}`)
+
+  // 获取 Markdown 内容
+  const markdown = body || ''
+
+  if (!markdown.trim()) {
+    console.warn(`No content for: ${title}`)
+    return existingChunks
+  }
+
+  // 切分为 chunks
+  const chunks = splitMarkdownToChunks(
+    markdown,
+    postPath,
+    {
+      title,
+      path: postPath
+    }
+  )
+
+  if (chunks.length === 0) {
+    return existingChunks
+  }
+
+  // 批量获取 embeddings
+  const texts = chunks.map(c => c.content)
+  const embeddings = await getEmbeddings(texts)
+
+  // 组合 chunk 和 embedding
+  const newChunks: VectorizedChunk[] = []
+  for (let i = 0; i < chunks.length; i++) {
+    newChunks.push({
+      id: chunks[i]!.id,
+      content: chunks[i]!.content,
+      source: chunks[i]!.source,
+      metadata: chunks[i]!.metadata,
+      embedding: embeddings[i]!
+    })
+  }
+
+  console.log(`  ✓ ${chunks.length} chunks for ${title}`)
+
+  // 合并新旧向量
+  return [...existingChunks, ...newChunks]
+}
+
+/**
  * 保存向量到本地文件
  */
 async function saveVectors(chunks: VectorizedChunk[]) {
@@ -259,25 +331,32 @@ export default defineEventHandler(async (event) => {
   if (method === 'POST') {
     try {
       const body = await readBody(event)
-      const { force = false } = body
-
-      // 检查是否已存在
-      if (!force) {
-        const existing = await loadVectors()
-        if (existing) {
-          return {
-            success: true,
-            message: '向量已存在，使用 force: true 重新生成',
-            stats: await getVectorStats()
-          }
-        }
-      }
+      const { force = false, path } = body
 
       console.log('Starting blog vectorization...')
       const startTime = Date.now()
 
-      // 向量化所有博客
-    const chunks = await vectorizeAllBlogs()
+      let chunks: VectorizedChunk[]
+
+      // 如果指定了 path，进行增量向量化
+      if (path) {
+        console.log(`Incremental vectorization for: ${path}`)
+        chunks = await vectorizeSinglePost(path)
+      } else {
+        // 检查是否已存在
+        if (!force) {
+          const existing = await loadVectors()
+          if (existing) {
+            return {
+              success: true,
+              message: '向量已存在，使用 force: true 重新生成',
+              stats: await getVectorStats()
+            }
+          }
+        }
+        // 全量向量化
+        chunks = await vectorizeAllBlogs()
+      }
 
       // 保存到本地
       const store = await saveVectors(chunks)
@@ -303,13 +382,43 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // DELETE - 清除向量
+  // DELETE - 清除向量（支持清除全部或单篇文章）
   if (method === 'DELETE') {
     try {
-      await fs.unlink(VECTOR_STORE_PATH).catch(() => {})
-      return {
-        success: true,
-        message: '向量数据已清除'
+      const body = await readBody(event)
+      const { path } = body
+
+      if (path) {
+        // 只移除指定文章的向量
+        const store = await loadVectors()
+        if (store) {
+          const originalCount = store.chunks.length
+          store.chunks = store.chunks.filter(c => c.source !== path)
+          store.lastUpdated = new Date().toISOString()
+          
+          await fs.writeFile(
+            VECTOR_STORE_PATH,
+            JSON.stringify(store, null, 2),
+            'utf-8'
+          )
+          
+          const removedCount = originalCount - store.chunks.length
+          return {
+            success: true,
+            message: `已移除文章 "${path}" 的 ${removedCount} 个向量块`
+          }
+        }
+        return {
+          success: true,
+          message: '向量存储为空'
+        }
+      } else {
+        // 清除全部向量
+        await fs.unlink(VECTOR_STORE_PATH).catch(() => {})
+        return {
+          success: true,
+          message: '向量数据已清除'
+        }
       }
     } catch (error: any) {
       throw createError({

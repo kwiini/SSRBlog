@@ -44,9 +44,9 @@ async function loadVectors(): Promise<VectorStore | null> {
 }
 
 /**
- * 检索相关内容
+ * 检索相关内容（按文章去重）
  * @param query 查询文本
- * @param topK 返回结果数量
+ * @param topK 返回结果数量（按文章去重后的数量）
  * @returns 检索结果
  */
 export async function retrieveContext(query: string, topK: number = 3): Promise<SearchResult[]> {
@@ -60,7 +60,7 @@ export async function retrieveContext(query: string, topK: number = 3): Promise<
   const queryEmbedding = await getEmbedding(query)
 
   // 计算相似度并排序
-  const results = store.chunks
+  const allResults = store.chunks
     .map(chunk => ({
       content: chunk.content,
       source: chunk.source,
@@ -71,10 +71,23 @@ export async function retrieveContext(query: string, topK: number = 3): Promise<
       similarity: cosineSimilarity(queryEmbedding, chunk.embedding)
     }))
     .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, topK)
     .filter(r => r.similarity > 0.3)
 
-  return results
+  // 按文章去重，保留每个文章最相关的 chunk
+  const seenSources = new Set<string>()
+  const uniqueResults: SearchResult[] = []
+
+  for (const result of allResults) {
+    if (!seenSources.has(result.source)) {
+      seenSources.add(result.source)
+      uniqueResults.push(result)
+      if (uniqueResults.length >= topK) {
+        break
+      }
+    }
+  }
+
+  return uniqueResults
 }
 
 /**
