@@ -1,4 +1,4 @@
-import { getEmbedding, getEmbeddings, cosineSimilarity } from "../utils/embedding"
+import { getEmbeddingCached as getEmbedding, getEmbeddingsCached as getEmbeddings, cosineSimilarity } from "../utils/embedding-cache"
 
 export default defineEventHandler(async (event) => {
   try {

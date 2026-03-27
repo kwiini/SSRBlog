@@ -1,4 +1,4 @@
-import { cosineSimilarity } from "../utils/embedding"
+import { cosineSimilarity } from "../utils/embedding-cache"
 import { promises as fs } from 'fs'
 import { join } from 'path'
 

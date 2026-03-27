@@ -1,5 +1,5 @@
 import { splitMarkdownToChunks, extractTextFromMarkdown } from "../utils/chunker"
-import { getEmbeddings } from "../utils/embedding"
+import { getEmbeddingsCached as getEmbeddings } from "../utils/embedding-cache"
 import { promises as fs } from 'fs'
 import { join } from 'path'
 
