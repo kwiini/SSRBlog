@@ -28,3 +28,6 @@ content/articles/*.md
 
 # trae configure
 .trae/*
+
+# data files
+data/*  
