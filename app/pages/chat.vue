@@ -15,7 +15,7 @@
         <div>
           <h1 class="text-lg font-semibold text-stone-800">{{ useRAG ? '知识库对话' : 'AI 对话' }}</h1>
           <p class="text-xs text-stone-500 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full" :class="useRAG ? 'bg-emerald-500' : 'bg-stone-400'"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             {{ useRAG ? '基于博客知识库的智能问答' : (configStatus?.model || '准备就绪') }}
           </p>
         </div>

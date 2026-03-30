@@ -18,7 +18,7 @@ body {
 }
 
 /* Markdown 内容样式 - 自然简约风 */
-.prose h1 {
+/* .prose h1 {
   font-size: 1.5rem;
   font-weight: 500;
   color: #1c1917;
@@ -141,4 +141,4 @@ body {
 .prose th {
   font-weight: 500;
   color: #1c1917;
-}
+} */

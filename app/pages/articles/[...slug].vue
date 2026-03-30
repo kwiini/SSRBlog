@@ -161,12 +161,14 @@
 
 <script setup>
 const route = useRoute()
-const slug = route.params.slug
+const slug = computed(() => route.params.slug)
 const showToast = ref(false)
 const relatedPosts = ref([])
 
-const { data: post } = await useAsyncData('post', () => {
-  return queryCollection('content').path(`/articles/${slug}`).first()
+const { data: post } = await useAsyncData(() => `post-${slug.value}`, () => {
+  return queryCollection('content').path(`/articles/${slug.value}`).first()
+}, {
+  watch: [slug]
 })
 
 // 获取相关文章
@@ -187,10 +189,12 @@ const fetchRelatedPosts = async () => {
   }
 }
 
-// 页面加载后获取相关文章
-onMounted(() => {
-  fetchRelatedPosts()
-})
+// 监听文章变化，自动获取相关文章
+watch(() => post.value?.path, (newPath) => {
+  if (newPath) {
+    fetchRelatedPosts()
+  }
+}, { immediate: true })
 
 // 计算阅读时间
 const readingTime = computed(() => {

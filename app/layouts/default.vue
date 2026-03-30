@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen bg-stone-50 text-stone-800 font-sans flex flex-col">
-    <!-- 自然风格导航栏 -->
+    <!-- 导航栏 -->
     <nav class="bg-white/70 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-50 shrink-0">
       <div class="max-w-5xl mx-auto px-6">
         <div class="flex justify-between items-center h-14">
-          <!-- Logo - 简洁自然 -->
+          <!-- Logo -->
           <NuxtLink to="/" class="flex items-center gap-2.5 group">
             <div class="w-7 h-7 bg-stone-800 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
               <span class="text-white font-medium text-sm">a</span>

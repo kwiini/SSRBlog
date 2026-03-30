@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 精致标题区 -->
+    <!-- 标题区 -->
     <div class="mb-12">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-1 h-6 bg-linear-to-b from-stone-700 to-stone-500 rounded-full"></div>
@@ -95,6 +95,11 @@ useHead({
   ]
 })
 
+/**
+ * 格式化日期字符串为中文日期格式
+ * @param {string} dateStr - 日期字符串
+ * @returns {string} - 格式化后的日期字符串
+ */
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
