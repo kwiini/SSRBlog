@@ -365,13 +365,13 @@
 </template>
 
 <script setup>
-const messages = ref([]);
-const inputMessage = ref("");
-const loading = ref(false);
-const streaming = ref(false);
-const useRAG = ref(true);
-const messagesContainer = ref(null);
-const inputRef = ref(null);
+const messages = ref([]); // 消息列表
+const inputMessage = ref(""); // 输入消息
+const loading = ref(false); // 加载状态
+const streaming = ref(false); // 流式输出状态
+const useRAG = ref(true); // 是否使用知识库模式
+const messagesContainer = ref(null); // 消息容器
+const inputRef = ref(null); // 输入框引用 （用于自动调整高度）
 
 // 快捷提示
 const quickTips = [

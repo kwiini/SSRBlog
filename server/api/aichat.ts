@@ -1,26 +1,26 @@
-import { callLLM } from "../utils/llm"
+import { callLLM } from "../utils/llm";
 
 export default defineEventHandler(async (event) => {
   try {
-    const { message } = await readBody(event)
+    const { message } = await readBody(event);
 
-    if (!message || typeof message !== 'string') {
+    if (!message || typeof message !== "string") {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Message is required and must be a string'
-      })
+        statusMessage: "Message is required and must be a string",
+      });
     }
 
-    const response = await callLLM(message)
+    const response = await callLLM(message);
 
     return {
       success: true,
-      data: response
-    }
+      data: response,
+    };
   } catch (error: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || 'Internal server error'
-    })
+      statusMessage: error.message || "Internal server error",
+    });
   }
-})
+});

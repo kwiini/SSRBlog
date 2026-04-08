@@ -1,9 +1,9 @@
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  
+  const config = useRuntimeConfig();
+
   return {
-    hasKey: !!config.llmApiKey && config.llmApiKey !== '',
+    hasKey: !!config.llmApiKey && config.llmApiKey !== "",
     model: config.llmModel,
-    baseURL: config.llmBaseURL
-  }
-})
+    baseURL: config.llmBaseURL,
+  };
+});

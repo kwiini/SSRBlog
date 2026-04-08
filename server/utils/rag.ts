@@ -1,45 +1,48 @@
-import { getEmbeddingCached as getEmbedding, cosineSimilarity } from "./embedding-cache"
-import { promises as fs } from 'fs'
-import { join } from 'path'
+import {
+  getEmbeddingCached as getEmbedding,
+  cosineSimilarity,
+} from "./embedding-cache";
+import { promises as fs } from "fs";
+import { join } from "path";
 
 interface SearchResult {
-  content: string
-  source: string
+  content: string; // 检索结果的 chunk 内容
+  source: string; // 检索结果的 chunk标识符
   metadata: {
-    title: string
-    path: string
-  }
-  similarity: number
+    title: string;
+    path: string;
+  };
+  similarity: number; // 检索结果的相似度
 }
 
 interface VectorStore {
-  version: string
-  lastUpdated: string
+  version: string; // 向量存储的版本号
+  lastUpdated: string; // 向量存储的更新时间
   chunks: Array<{
-    id: string
-    content: string
-    embedding: number[]
-    source: string
+    id: string;
+    content: string;
+    embedding: number[];
+    source: string;
     metadata: {
-      title: string
-      path: string
-      index: number
-      total: number
-    }
-  }>
+      title: string;
+      path: string;
+      index: number;
+      total: number;
+    };
+  }>;
 }
 
-const VECTOR_STORE_PATH = join(process.cwd(), 'data', 'blog-vectors.json')
+const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json");
 
 /**
  * 加载向量数据
  */
 async function loadVectors(): Promise<VectorStore | null> {
   try {
-    const data = await fs.readFile(VECTOR_STORE_PATH, 'utf-8')
-    return JSON.parse(data) as VectorStore
+    const data = await fs.readFile(VECTOR_STORE_PATH, "utf-8");
+    return JSON.parse(data) as VectorStore;
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -49,45 +52,48 @@ async function loadVectors(): Promise<VectorStore | null> {
  * @param topK 返回结果数量（按文章去重后的数量）
  * @returns 检索结果
  */
-export async function retrieveContext(query: string, topK: number = 3): Promise<SearchResult[]> {
-  const store = await loadVectors()
+export async function retrieveContext(
+  query: string,
+  topK: number = 3,
+): Promise<SearchResult[]> {
+  const store = await loadVectors();
 
   if (!store || store.chunks.length === 0) {
-    return []
+    return [];
   }
 
   // 获取查询的 embedding
-  const queryEmbedding = await getEmbedding(query)
+  const queryEmbedding = await getEmbedding(query);
 
   // 计算相似度并排序
   const allResults = store.chunks
-    .map(chunk => ({
+    .map((chunk) => ({
       content: chunk.content,
       source: chunk.source,
       metadata: {
         title: chunk.metadata.title,
-        path: chunk.metadata.path
+        path: chunk.metadata.path,
       },
-      similarity: cosineSimilarity(queryEmbedding, chunk.embedding)
+      similarity: cosineSimilarity(queryEmbedding, chunk.embedding),
     }))
     .sort((a, b) => b.similarity - a.similarity)
-    .filter(r => r.similarity > 0.3)
+    .filter((r) => r.similarity > 0.3);
 
   // 按文章去重，保留每个文章最相关的 chunk
-  const seenSources = new Set<string>()
-  const uniqueResults: SearchResult[] = []
+  const seenSources = new Set<string>(); // 已处理的文章标识符
+  const uniqueResults: SearchResult[] = []; // 唯一检索结果
 
   for (const result of allResults) {
     if (!seenSources.has(result.source)) {
-      seenSources.add(result.source)
-      uniqueResults.push(result)
+      seenSources.add(result.source);
+      uniqueResults.push(result);
       if (uniqueResults.length >= topK) {
-        break
+        break;
       }
     }
   }
 
-  return uniqueResults
+  return uniqueResults;
 }
 
 /**
@@ -96,17 +102,20 @@ export async function retrieveContext(query: string, topK: number = 3): Promise<
  * @param context 检索到的上下文
  * @returns 拼接后的 Prompt
  */
-export function buildRAGPrompt(question: string, context: SearchResult[]): string {
+export function buildRAGPrompt(
+  question: string,
+  context: SearchResult[],
+): string {
   if (context.length === 0) {
-    return question
+    return question;
   }
 
   // 格式化上下文
   const contextText = context
     .map((item, index) => {
-      return `[${index + 1}] 来源：${item.metadata.title}\n内容：${item.content}`
+      return `[${index + 1}] 来源：${item.metadata.title}\n内容：${item.content}`;
     })
-    .join('\n\n')
+    .join("\n\n");
 
   // 构建 Prompt
   const prompt = `基于以下内容回答问题：
@@ -116,9 +125,9 @@ ${contextText}
 问题：
 ${question}
 
-请根据上述内容回答问题，如果内容中没有相关信息，请说明无法回答。`
+请根据上述内容回答问题，如果内容中没有相关信息，请说明无法回答。`;
 
-  return prompt
+  return prompt;
 }
 
 /**
@@ -129,20 +138,20 @@ ${question}
  */
 export async function ragQuery(
   question: string,
-  topK: number = 3
+  topK: number = 3,
 ): Promise<{
-  question: string
-  context: SearchResult[]
-  prompt: string
-  hasContext: boolean
+  question: string;
+  context: SearchResult[];
+  prompt: string;
+  hasContext: boolean;
 }> {
-  const context = await retrieveContext(question, topK)
-  const prompt = buildRAGPrompt(question, context)
+  const context = await retrieveContext(question, topK); // 检索上下文
+  const prompt = buildRAGPrompt(question, context); // 构建 RAG Prompt
 
   return {
     question,
     context,
     prompt,
-    hasContext: context.length > 0
-  }
+    hasContext: context.length > 0,
+  };
 }

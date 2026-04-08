@@ -329,10 +329,10 @@ definePageMeta({
   layout: "admin",
 });
 
-const posts = ref([]);
-const vectorStats = ref(null);
-const regenerating = ref(false);
-const toast = ref({ show: false, message: "", type: "success" });
+const posts = ref([]);  // 文章列表
+const vectorStats = ref(null); // 向量状态信息
+const regenerating = ref(false); // 是否正在重新向量化
+const toast = ref({ show: false, message: "", type: "success" }); // 提示消息
 
 // 获取文章列表
 const fetchPosts = async () => {

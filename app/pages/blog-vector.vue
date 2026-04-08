@@ -420,16 +420,16 @@
 </template>
 
 <script setup>
-const stats = ref(null);
-const searchQuery = ref("");
-const searchResults = ref([]);
-const searched = ref(false);
-const error = ref("");
+const stats = ref(null);  // 向量状态信息
+const searchQuery = ref(""); // 搜索查询
+const searchResults = ref([]); // 搜索结果
+const searched = ref(false); // 是否已搜索
+const error = ref(""); // 错误信息  
 
 const loading = ref({
-  vectorize: false,
-  search: false,
-  clear: false,
+  vectorize: false, // 向量化加载状态
+  search: false, // 搜索加载状态
+  clear: false, // 清除加载状态
 });
 
 // 获取统计信息
@@ -465,8 +465,6 @@ const vectorize = async () => {
       body: { force: true },
     });
     await fetchStats();
-    // 显示成功提示
-    showSuccess(data.message);
   } catch (err) {
     error.value = err.message || "向量化失败";
   } finally {
@@ -512,12 +510,6 @@ const search = async () => {
   } finally {
     loading.value.search = false;
   }
-};
-
-// 成功提示
-const showSuccess = (message) => {
-  // 可以在这里添加成功提示逻辑
-  console.log("Success:", message);
 };
 
 // 初始化
