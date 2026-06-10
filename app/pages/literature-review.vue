@@ -395,6 +395,7 @@
 </template>
 
 <script setup lang="ts">
+// · 文献条目
 interface Paper {
   id: string;
   name: string;
@@ -404,6 +405,7 @@ interface Paper {
   isPdf?: boolean;
 }
 
+// · 核心内容条目
 interface CoreContent {
   title: string;
   summary: string;
@@ -411,6 +413,7 @@ interface CoreContent {
   conclusion: string;
 }
 
+// · 审核结果
 interface ReviewResult {
   field: string;
   reporter: string;
@@ -422,13 +425,13 @@ interface ReviewResult {
   thoughts: string;
 }
 
-const STORAGE_KEY = 'literature-review-data';
+const STORAGE_KEY = 'literature-review-data'; // 本地存储键名
 
-const isDragging = ref(false);
-const papers = ref<Paper[]>([]);
-const generating = ref(false);
-const reviewResult = ref<ReviewResult | null>(null);
-const previewPaper = ref<Paper | null>(null);
+const isDragging = ref(false); // 是否正在拖动
+const papers = ref<Paper[]>([]); // 文献条目列表
+const generating = ref(false); // 是否正在生成
+const reviewResult = ref<ReviewResult | null>(null); // 审核结果
+const previewPaper = ref<Paper | null>(null); // 预览文献条目
 
 // 打开预览
 function openPreview(paper: Paper) {

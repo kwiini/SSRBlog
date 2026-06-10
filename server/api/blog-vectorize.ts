@@ -7,6 +7,7 @@ import { clearVectorCache } from "../utils/hybrid-search";
 import { promises as fs } from "fs";
 import { join } from "path";
 
+// · 向量化块条目
 interface VectorizedChunk {
   id: string;
   content: string;
@@ -20,13 +21,14 @@ interface VectorizedChunk {
   };
 }
 
+// · 向量存储条目
 interface VectorStore {
   version: string;
   lastUpdated: string;
   chunks: VectorizedChunk[];
 }
 
-const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json");
+const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json"); // 向量存储文件路径
 
 /**
  * 确保数据目录存在

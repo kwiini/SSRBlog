@@ -3,6 +3,7 @@ import { extractTextFromMarkdown } from "../utils/chunker";
 import { promises as fs } from "fs";
 import { join } from "path";
 
+// · 向量存储条目
 interface VectorStore {
   version: string;
   lastUpdated: string;
@@ -20,6 +21,7 @@ interface VectorStore {
   }>;
 }
 
+// · 相关文章条目
 interface RelatedPost {
   title: string;
   path: string;
@@ -27,7 +29,7 @@ interface RelatedPost {
   description?: string;
 }
 
-const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json");
+const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json"); // 向量存储文件路径
 
 /**
  * 加载向量数据

@@ -42,9 +42,9 @@ export default defineEventHandler(async (event: H3Event) => {
   ];
 
   // 设置 SSE 响应头
-  setResponseHeader(event, "Content-Type", "text/event-stream");
-  setResponseHeader(event, "Cache-Control", "no-cache");
-  setResponseHeader(event, "Connection", "keep-alive");
+  setResponseHeader(event, "Content-Type", "text/event-stream"); // SSE 响应头
+  setResponseHeader(event, "Cache-Control", "no-cache"); // 禁用缓存
+  setResponseHeader(event, "Connection", "keep-alive"); // 保持连接
 
   try {
     const response = await fetch(`${baseURL}/chat/completions`, {

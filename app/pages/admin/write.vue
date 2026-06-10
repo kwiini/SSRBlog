@@ -326,11 +326,12 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 
-const isEditing = ref(false);
-const saving = ref(false);
-const vectorizing = ref(false);
-const toast = ref({ show: false, message: "", type: "success" });
+const isEditing = ref(false); // 是否正在编辑文章
+const saving = ref(false); // 是否正在保存文章
+const vectorizing = ref(false); // 是否正在向量化文章
+const toast = ref({ show: false, message: "", type: "success" }); // 提示消息
 
+// 文章数据
 const post = ref({
   title: "",
   slug: "",

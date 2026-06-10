@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import { join } from "path";
 
+// · 文章数据条目
 interface PostData {
   title: string;
   slug: string;
@@ -11,8 +12,8 @@ interface PostData {
   publish?: boolean;
 }
 
-const CONTENT_DIR = join(process.cwd(), "content", "articles");
-const DRAFT_DIR = join(process.cwd(), "content", "drafts");
+const CONTENT_DIR = join(process.cwd(), "content", "articles"); // 文章目录
+const DRAFT_DIR = join(process.cwd(), "content", "drafts"); // 草稿目录
 
 /**
  * 确保内容目录存在

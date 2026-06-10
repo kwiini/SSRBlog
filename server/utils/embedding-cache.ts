@@ -5,12 +5,14 @@
 
 import { createHash } from "crypto";
 
+// · 缓存条目
 interface CacheEntry {
   embedding: number[];
   timestamp: number;
   accessCount: number;
 }
 
+// · 待处理请求条目
 interface PendingRequest {
   promise: Promise<number[]>;
   timestamp: number;
@@ -30,9 +32,9 @@ const BATCH_CONFIG = {
   maxConcurrent: 5, // 最大并发请求数
 };
 
-// 内存缓存
-const embeddingCache = new Map<string, CacheEntry>();
-const pendingRequests = new Map<string, PendingRequest>();
+// · 内存缓存 
+const embeddingCache = new Map<string, CacheEntry>(); // 缓存条目映射
+const pendingRequests = new Map<string, PendingRequest>(); // 待处理请求映射
 
 // 批量请求队列
 interface BatchItem {
@@ -42,9 +44,9 @@ interface BatchItem {
   reject: (error: any) => void;
 }
 
-let batchQueue: BatchItem[] = [];
-let batchTimeout: NodeJS.Timeout | null = null;
-let activeRequests = 0;
+let batchQueue: BatchItem[] = []; // 批量请求队列
+let batchTimeout: NodeJS.Timeout | null = null; // 批量请求超时定时器
+let activeRequests = 0; // 当前活跃请求数
 
 /**
  * 生成文本哈希（用于缓存键）

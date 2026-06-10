@@ -3,12 +3,14 @@
  * 去除冗余信息，保留关键内容
  */
 
+// · 上下文压缩选项
 interface CompressOptions {
   maxLength?: number;        // 最大长度限制
   removeDuplicates?: boolean; // 是否去除重复句子
   keepSentences?: number;     // 保留的句子数量
 }
 
+// · 默认上下文压缩选项
 const DEFAULT_OPTIONS: CompressOptions = {
   maxLength: 600,
   removeDuplicates: true,

@@ -1,7 +1,6 @@
 /**
  * 文本切分工具 - 将长文本切分为适合 embedding 的 chunks
  */
-
 export interface Chunk {
   id: string; // chunk 的唯一标识符
   content: string; // chunk 内容
@@ -14,12 +13,14 @@ export interface Chunk {
   };
 }
 
+// · 文本切分选项
 interface ChunkOptions {
   chunkSize?: number; // 每个 chunk 的最大字符数
   chunkOverlap?: number; // 相邻 chunk 的重叠字符数
   separators?: string[]; // 分隔符优先级列表
 }
 
+// · 默认文本切分选项
 const DEFAULT_OPTIONS: ChunkOptions = {
   chunkSize: 800,        // 增大到 800，保留更多上下文语义
   chunkOverlap: 150,     // 增大到 150，确保信息不丢失

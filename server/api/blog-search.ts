@@ -6,6 +6,7 @@ import { extractKeywords } from "../utils/bm25";
 import { promises as fs } from "fs";
 import { join } from "path";
 
+// · 搜索结果条目
 interface SearchResult {
   id: string;
   content: string;
@@ -19,6 +20,7 @@ interface SearchResult {
   similarity: number;
 }
 
+// · 向量存储条目
 interface VectorStore {
   version: string;
   lastUpdated: string;
@@ -36,7 +38,7 @@ interface VectorStore {
   }>;
 }
 
-const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json");
+const VECTOR_STORE_PATH = join(process.cwd(), "data", "blog-vectors.json"); // 向量存储文件路径
 
 /**
  * 加载向量数据

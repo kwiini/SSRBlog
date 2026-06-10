@@ -217,6 +217,7 @@ const formatDate = (dateStr) => {
   });
 };
 
+// · 解析标签字符串为数组
 const parseTags = (tags) => {
   if (!tags) return [];
   if (Array.isArray(tags)) return tags.slice(0, 3);
@@ -228,6 +229,7 @@ const parseTags = (tags) => {
   return [];
 };
 
+// · 计算文章阅读时间（分钟）
 const getReadingTime = (body) => {
   if (!body?.value) return 1;
   const text = JSON.stringify(body.value);

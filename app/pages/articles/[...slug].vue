@@ -280,9 +280,9 @@
 
 <script setup>
 const route = useRoute();
-const slug = computed(() => route.params.slug);
-const showToast = ref(false);
-const relatedPosts = ref([]);
+const slug = computed(() => route.params.slug); // 文章路径
+const showToast = ref(false); // 是否显示复制成功提示
+const relatedPosts = ref([]); // 相关文章列表
 
 const { data: post } = await useAsyncData(
   () => `post-${slug.value}`,

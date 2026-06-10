@@ -163,9 +163,9 @@
 <script setup lang="ts">
 const { isAdmin, login, logout } = useAdminAuth();
 
-const showLoginModal = ref(false);
-const password = ref('');
-const loginError = ref('');
+const showLoginModal = ref(false); // 登录模态框是否显示
+const password = ref(''); // 密码输入框
+const loginError = ref(''); // 登录错误提示
 
 /**
  * 处理登录
