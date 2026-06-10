@@ -255,7 +255,7 @@
           <div
             v-for="(result, index) in searchResults"
             :key="result.id"
-            class="border border-stone-100 rounded-xl p-4 hover:border-stone-200 hover:bg-stone-50/50 transition-all duration-200 group"
+            class="border border-stone-100 rounded-xl p-4 hover:border-stone-200 hover:bg-stone-50/50 transition-all duration-200 group fade-item"
             :style="{ animationDelay: `${index * 50}ms` }"
           >
             <div class="flex items-start justify-between gap-4 mb-2">
@@ -354,7 +354,7 @@
           <div
             v-for="(article, index) in stats.articles"
             :key="article.path"
-            class="flex justify-between items-center py-3 px-3 rounded-lg border border-stone-100 hover:border-stone-200 hover:bg-stone-50 transition-all"
+            class="flex justify-between items-center py-3 px-3 rounded-lg border border-stone-100 hover:border-stone-200 hover:bg-stone-50 transition-all fade-item"
             :style="{ animationDelay: `${index * 30}ms` }"
           >
             <NuxtLink
@@ -438,7 +438,7 @@ const fetchStats = async () => {
     const data = await $fetch("/api/blog-vectorize");
     stats.value = data;
   } catch (err) {
-    console.error("获取统计失败:", err);
+    // console.error("获取统计失败:", err);
   }
 };
 
@@ -547,6 +547,22 @@ useHead({ title: "博客向量化 - aissr" });
 .toast-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-10px);
+}
+
+/* 列表项淡入 */
+.fade-item {
+  animation: fadeItemIn 0.4s ease both;
+}
+
+@keyframes fadeItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 滚动条样式 */

@@ -3,6 +3,7 @@ import {
   extractTextFromMarkdown,
 } from "../utils/chunker";
 import { getEmbeddingsCached as getEmbeddings } from "../utils/embedding-cache";
+import { clearVectorCache } from "../utils/hybrid-search";
 import { promises as fs } from "fs";
 import { join } from "path";
 
@@ -79,9 +80,20 @@ async function readMarkdownFiles(dir: string, posts: any[]) {
       // 解析 frontmatter
       const { frontmatter, body } = parseMarkdown(content);
 
+      // 从文章内容提取标题（第一行 H1）
+      const h1Match = content.match(/^#\s+(.+)$/m);
+      const contentTitle = h1Match?.[1]?.trim();
+
+      // 从文件名生成标题（将连字符替换为空格，首字母大写）
+      const fileNameTitle = entry.name
+        .replace(".md", "")
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
       posts.push({
         path: relativePath,
-        title: frontmatter.title || entry.name.replace(".md", ""),
+        title: frontmatter.title || contentTitle || fileNameTitle,
         description: frontmatter.description || "",
         meta: { date: frontmatter.date },
         body: { value: body },
@@ -136,7 +148,7 @@ async function vectorizeAllBlogs(): Promise<VectorizedChunk[]> {
     console.log(`Processing: ${post.title}`);
 
     // 获取 Markdown 内容
-    const markdown = post.body?.value ? JSON.stringify(post.body.value) : "";
+    const markdown = post.body?.value || "";
 
     if (!markdown) {
       console.warn(`No content for: ${post.title}`);
@@ -261,6 +273,9 @@ async function saveVectors(chunks: VectorizedChunk[]) {
     JSON.stringify(store, null, 2),
     "utf-8",
   );
+
+  // 清除混合检索缓存
+  clearVectorCache();
 
   return store;
 }
@@ -387,8 +402,14 @@ export default defineEventHandler(async (event) => {
   // DELETE - 清除向量（支持清除全部或单篇文章）
   if (method === "DELETE") {
     try {
-      const body = await readBody(event);
-      const { path } = body;
+      // 尝试从 body 获取 path，如果没有 body 则清除全部
+      let path: string | undefined;
+      try {
+        const body = await readBody(event);
+        path = body?.path;
+      } catch {
+        // 没有 body 时不报错，path 保持 undefined
+      }
 
       if (path) {
         // 只移除指定文章的向量
@@ -417,6 +438,8 @@ export default defineEventHandler(async (event) => {
       } else {
         // 清除全部向量
         await fs.unlink(VECTOR_STORE_PATH).catch(() => {});
+        // 清除混合检索缓存
+        clearVectorCache();
         return {
           success: true,
           message: "向量数据已清除",

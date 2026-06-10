@@ -1,5 +1,5 @@
 import { H3Event } from "h3";
-import { ragQuery, retrieveContext, buildRAGPrompt } from "../utils/rag";
+import { ragQuery, RAGQueryOptions } from "../utils/rag";
 
 interface LLMMessage {
   role: "system" | "user" | "assistant";
@@ -7,7 +7,17 @@ interface LLMMessage {
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const { message, history = [], useRAG = true } = await readBody(event);
+  const { 
+    message, 
+    history = [], 
+    useRAG = true,
+    ragOptions = {} 
+  } = await readBody(event) as {
+    message: string;
+    history: LLMMessage[];
+    useRAG: boolean;
+    ragOptions?: RAGQueryOptions;
+  };
 
   if (!message || typeof message !== "string") {
     throw createError({
@@ -35,9 +45,25 @@ export default defineEventHandler(async (event: H3Event) => {
   // 如果启用 RAG，检索相关内容并构建 Prompt
   if (useRAG) {
     try {
-      const ragResult = await ragQuery(message, 3);
+      const ragResult = await ragQuery(message, {
+        topK: ragOptions.topK || 3,
+        useMultiQuery: ragOptions.useMultiQuery || false,
+        useCompression: ragOptions.useCompression !== false,  // 默认启用
+        maxContextLength: ragOptions.maxContextLength || 600
+      });
       userContent = ragResult.prompt;
       retrievedContext = ragResult.context;
+      
+      // 日志记录
+      console.log(`[RAG] 查询: "${message.substring(0, 50)}..."`);
+      console.log(`[RAG] 关键词: ${ragResult.keywords.join(', ')}`);
+      console.log(`[RAG] 检索到 ${ragResult.context.length} 条上下文`);
+      
+      // 记录检索性能
+      if (ragResult.context.length > 0) {
+        const avgScore = ragResult.context.reduce((sum, c) => sum + (c.hybridScore || c.similarity), 0) / ragResult.context.length;
+        console.log(`[RAG] 平均相关度: ${(avgScore * 100).toFixed(1)}%`);
+      }
     } catch (error) {
       console.error("RAG 检索失败:", error);
       // 检索失败时仍使用原始问题
@@ -69,6 +95,7 @@ export default defineEventHandler(async (event: H3Event) => {
       retrievedContext.map((c) => ({
         title: c.metadata.title,
         path: c.metadata.path,
+        score: Math.round((c.hybridScore || c.similarity) * 100),
       })),
     );
     setResponseHeader(event, "X-Context-Sources", encodeURIComponent(sources));

@@ -16,7 +16,7 @@
     <!-- 文章列表 -->
     <div class="space-y-5">
       <article
-        v-for="(post, index) in posts"
+        v-for="(post, index) in paginatedPosts"
         :key="post.path"
         class="group"
         :style="{ animationDelay: `${index * 50}ms` }"
@@ -116,6 +116,56 @@
       </article>
     </div>
 
+    <!-- 分页 -->
+    <div
+      v-if="totalPages > 1"
+      class="flex items-center justify-end gap-2 mt-10"
+    >
+      <!-- 上一页 -->
+      <button
+        @click="currentPage--"
+        :disabled="currentPage === 1"
+        class="w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all duration-200"
+        :class="currentPage === 1
+          ? 'text-stone-300 cursor-not-allowed'
+          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        "
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+
+      <!-- 页码 -->
+      <button
+        v-for="page in visiblePages"
+        :key="page"
+        @click="currentPage = page"
+        class="min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-all duration-200"
+        :class="page === currentPage
+          ? 'bg-stone-800 text-white shadow-sm'
+          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        "
+      >
+        {{ page }}
+      </button>
+
+      <!-- 下一页 -->
+      <button
+        @click="currentPage++"
+        :disabled="currentPage === totalPages"
+        class="w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all duration-200"
+        :class="currentPage === totalPages
+          ? 'text-stone-300 cursor-not-allowed'
+          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        "
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- 空状态 -->
     <Transition name="fade">
       <div
@@ -187,6 +237,54 @@ const getReadingTime = (body) => {
 
 const { data: posts } = await useAsyncData("posts", () => {
   return queryCollection("content").all();
+});
+
+// 分页配置
+const pageSize = 6;
+const route = useRoute();
+const router = useRouter();
+
+// 从 URL 读取页码，默认第 1 页
+const currentPage = ref(parseInt(route.query.page?.toString() || "1") || 1);
+
+// 分页后的文章
+const paginatedPosts = computed(() => {
+  if (!posts.value) return [];
+  const start = (currentPage.value - 1) * pageSize;
+  return posts.value.slice(start, start + pageSize);
+});
+
+// 总页数
+const totalPages = computed(() => {
+  if (!posts.value) return 0;
+  return Math.ceil(posts.value.length / pageSize);
+});
+
+// 可见页码（最多显示 5 个）
+const visiblePages = computed(() => {
+  const pages = [];
+  const maxVisible = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
+  let end = Math.min(totalPages.value, start + maxVisible - 1);
+  
+  if (end - start < maxVisible - 1) {
+    start = Math.max(1, end - maxVisible + 1);
+  }
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+// 页码变化时同步到 URL 并滚动到顶部
+watch(currentPage, (newPage, oldPage) => {
+  if (newPage !== oldPage) {
+    router.push({
+      query: { ...route.query, page: newPage > 1 ? newPage.toString() : undefined }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 });
 </script>
 

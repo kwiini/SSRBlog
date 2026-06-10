@@ -2,6 +2,7 @@ import {
   getEmbeddingCached as getEmbedding,
   cosineSimilarity,
 } from "../utils/embedding-cache";
+import { extractKeywords } from "../utils/bm25";
 import { promises as fs } from "fs";
 import { join } from "path";
 
@@ -81,10 +82,40 @@ async function searchBlogs(
   });
 
   // 按相似度排序并取前 K 个
-  return results
+  const filtered = results
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, topK)
     .filter((r) => r.similarity > 0.3); // 过滤低相似度结果
+  
+  // 提取关键词用于高亮
+  const keywords = extractKeywords(query);
+  
+  // 添加高亮
+  return filtered.map(r => ({
+    ...r,
+    content: highlightKeywords(r.content, keywords),
+  }));
+}
+
+/**
+ * 高亮关键词
+ */
+function highlightKeywords(text: string, keywords: string[]): string {
+  if (keywords.length === 0) return text;
+  
+  let highlighted = text;
+  for (const keyword of keywords) {
+    const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+    highlighted = highlighted.replace(regex, '**$1**');
+  }
+  return highlighted;
+}
+
+/**
+ * 转义正则特殊字符
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**

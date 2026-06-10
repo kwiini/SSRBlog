@@ -320,7 +320,7 @@
 
 <script setup>
 definePageMeta({
-  layout: "admin",
+  layout: "default",
 });
 
 const route = useRoute();
@@ -342,7 +342,7 @@ const post = ref({
 
 // 计算内容统计
 const contentStats = computed(() => {
-  const content = post.value.content || "";
+  const content = String(post.value.content || "");
   const words = content.length;
   const lines = content.split("\n").length;
   return `${words} 字 · ${lines} 行`;
@@ -378,14 +378,27 @@ tags: [${
 };
 
 // 加载文章数据
-const loadPost = async (path) => {
+const loadPost = async (path, fromDraft = false) => {
+  if (!path || path === 'undefined') return;
   try {
     const data = await queryCollection("content").path(path).first();
     if (data) {
+      // 读取原始 markdown 文件
+      const slug = path.replace("/articles/", "").replace(/^\//, "");
+      let rawContent = "";
+      try {
+        const fileData = await $fetch(
+          `/api/posts/get?path=${encodeURIComponent(path)}${fromDraft ? '&fromDraft=1' : ''}`
+        );
+        rawContent = fileData?.data?.content || "";
+      } catch {
+        // 加载失败
+      }
+
       post.value = {
         title: data.title || "",
-        slug: path.replace("/articles/", "").replace(/^\//, ""),
-        content: data.body?.value || "",
+        slug,
+        content: rawContent,
         description: data.description || "",
         date: data.meta?.date || new Date().toISOString().split("T")[0],
         tags: Array.isArray(data.meta?.tags)
@@ -393,12 +406,40 @@ const loadPost = async (path) => {
           : data.meta?.tags || "",
       };
       isEditing.value = true;
+    } else if (fromDraft) {
+      // 草稿不在 queryCollection 中，直接读文件
+      const slug = path.replace("/articles/", "").replace(/^\//, "");
+      try {
+        const fileData = await $fetch(
+          `/api/posts/get?path=${encodeURIComponent(path)}&fromDraft=1`
+        );
+        const meta = fileData?.data?.meta || {};
+        post.value = {
+          title: meta.title || slug,
+          slug,
+          content: fileData?.data?.content || "",
+          description: meta.description || "",
+          date: meta.date || new Date().toISOString().split("T")[0],
+          tags: Array.isArray(meta.tags) ? meta.tags.join(", ") : meta.tags || "",
+        };
+        isEditing.value = true;
+      } catch (err) {
+        // console.error("加载草稿失败:", err);
+        showToast("加载草稿失败", "error");
+      }
     }
   } catch (err) {
-    console.error("加载文章失败:", err);
+    // console.error("加载文章失败:", err);
     showToast("加载文章失败", "error");
   }
 };
+
+// 页面加载
+const editPath = typeof route.query.edit === 'string' ? route.query.edit : undefined;
+const fromDraft = route.query.fromDraft === '1' || route.query.fromDraft === 'true';
+if (editPath && editPath !== 'undefined') {
+  await loadPost(editPath, fromDraft);
+}
 
 // 保存草稿
 const saveDraft = async () => {
@@ -426,13 +467,14 @@ const publishPost = async () => {
 
     // 触发增量向量化 - 只处理当前文章
     vectorizing.value = true;
-    await $fetch("/api/blog-vectorize", {
-      method: "POST",
-      body: {
-        path: postPath,
-        force: false,
-      },
-    });
+    try {
+      await $fetch("/api/blog-vectorize", {
+        method: "POST",
+        body: { path: postPath, force: false },
+      });
+    } catch (vecErr) {
+      // console.warn("向量化失败:", vecErr);
+    }
 
     showToast(isEditing.value ? "文章更新成功" : "文章发布成功", "success");
 
@@ -496,13 +538,6 @@ const showToast = (message, type = "success") => {
   }, 3000);
 };
 
-// 页面加载
-onMounted(() => {
-  const editPath = route.query.edit;
-  if (editPath) {
-    loadPost(editPath);
-  }
-});
 </script>
 
 <style scoped>

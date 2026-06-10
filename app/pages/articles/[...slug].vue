@@ -2,7 +2,7 @@
   <div>
     <!-- 返回按钮 -->
     <NuxtLink
-      to="/"
+      :to="backLink"
       class="inline-flex items-center text-stone-500 hover:text-stone-800 mb-8 text-sm transition-all duration-200 group"
     >
       <div
@@ -98,7 +98,7 @@
       </div>
 
       <!-- 文章内容 -->
-      <div class="px-8 py-2">
+      <div class="px-8">
         <ContentRenderer
           v-if="post"
           :value="post"
@@ -110,7 +110,7 @@
       <div class="px-8 py-6 border-t border-stone-100 bg-stone-50/50">
         <div class="flex items-center justify-between">
           <NuxtLink
-            to="/"
+            :to="backLink"
             class="inline-flex items-center text-sm text-stone-600 hover:text-stone-900 transition-colors group"
           >
             <div
@@ -307,7 +307,7 @@ const fetchRelatedPosts = async () => {
     });
     relatedPosts.value = data || [];
   } catch (err) {
-    console.error("获取相关文章失败:", err);
+    // console.error("获取相关文章失败:", err);
     relatedPosts.value = [];
   }
 };
@@ -358,6 +358,18 @@ const copyLink = () => {
     showToast.value = false;
   }, 2000);
 };
+
+// 返回列表页时保留页码
+const backLink = computed(() => {
+  // 从浏览器 history state 中获取来源页码
+  const state = history.state;
+  if (state?.back) {
+    const backUrl = new URL(state.back, window.location.origin);
+    const page = backUrl.searchParams.get('page');
+    if (page) return `/?page=${page}`;
+  }
+  return '/';
+});
 
 useHead(() => ({
   title: post.value?.title ? `${post.value.title} - aissr` : "文章 - aissr",

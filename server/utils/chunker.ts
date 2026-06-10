@@ -21,9 +21,20 @@ interface ChunkOptions {
 }
 
 const DEFAULT_OPTIONS: ChunkOptions = {
-  chunkSize: 500,
-  chunkOverlap: 50,
-  separators: ["\n## ", "\n### ", "\n\n", "\n", "。", "；", " "], // 优先级从高到低
+  chunkSize: 800,        // 增大到 800，保留更多上下文语义
+  chunkOverlap: 150,     // 增大到 150，确保信息不丢失
+  separators: [
+    "\n## ",             // Markdown H2 - 章节边界
+    "\n### ",            // Markdown H3 - 小节边界
+    "\n#### ",           // Markdown H4
+    "\n\n",              // 段落边界
+    "。",                 // 中文句号
+    "？",                // 中文问号
+    "！",                // 中文感叹号
+    "；",                // 中文分号
+    "\n",                // 换行
+    " "                  // 空格
+  ], // 优先级从高到低
 };
 
 /**
@@ -137,7 +148,7 @@ export function extractTextFromMarkdown(markdown: string): string {
   return (
     markdown
       // 移除代码块
-      .replace(/```[\s\S]*?```/g, "[代码块]")
+      .replace(/```[\s\S]*?```/g, "")
       // 移除行内代码
       .replace(/`([^`]+)`/g, "$1")
       // 移除图片
@@ -158,8 +169,10 @@ export function extractTextFromMarkdown(markdown: string): string {
       .replace(/^\d+\.\s+/gm, "")
       // 移除水平线
       .replace(/^-{3,}$/gm, "")
+      // 移除多余空白字符
+      .replace(/\s+/g, " ")
       // 合并多个空行
-      .replace(/\n{3,}/g, "\n\n")
+      .replace(/\n{2,}/g, "\n")
       .trim()
   );
 }
@@ -206,10 +219,10 @@ export function splitMarkdownToChunks(
     if (!text) continue;
 
     // 如果 section 太长，进一步切分
-    if (text.length > 500) {
+    if (text.length > 800) {
       const subChunks = splitTextToChunks(text, source, metadata, {
-        chunkSize: 400,
-        chunkOverlap: 50,
+        chunkSize: 800,
+        chunkOverlap: 150,
       });
       chunks.push(
         ...subChunks.map((chunk) => ({

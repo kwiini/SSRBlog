@@ -1,4 +1,5 @@
 import { cosineSimilarity } from "../utils/embedding-cache";
+import { extractTextFromMarkdown } from "../utils/chunker";
 import { promises as fs } from "fs";
 import { join } from "path";
 
@@ -123,11 +124,14 @@ async function getRelatedPosts(
       articleEmbedding,
     );
 
-    // 提取文章描述（使用第一个 chunk 的前 100 个字符）
-    const firstChunk = article.chunks[0];
-    const description = firstChunk
-      ? firstChunk.content.replace(/\\r\\n/g, " ").slice(0, 100) + "..."
-      : undefined;
+    // 提取文章描述（合并所有 chunks 内容，去除 Markdown 标记）
+    const fullContent = article.chunks.map(c => c.content).join("\n");
+    const cleanText = extractTextFromMarkdown(fullContent);
+    // 取第一段非空文本作为描述
+    const firstParagraph = cleanText.split("\n").find(p => p.trim().length > 20);
+    const description = firstParagraph
+      ? firstParagraph.trim().slice(0, 120) + "..."
+      : cleanText.slice(0, 120) + "...";
 
     results.push({
       title: article.title,

@@ -30,4 +30,4 @@ content/articles/*.md
 .trae/*
 
 # data files
-data/*  
+.json

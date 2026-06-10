@@ -42,25 +42,99 @@
               知识库
             </NuxtLink>
             <NuxtLink
-              to="/blog-vector"
+              to="/literature-review"
               class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
               :class="{
-                'bg-stone-100 text-stone-900': $route.path === '/blog-vector',
+                'bg-stone-100 text-stone-900': $route.path === '/literature-review',
               }"
             >
-              向量化
+              文献综述
             </NuxtLink>
+
+            <!-- 管理员专属链接 -->
+            <template v-if="isAdmin">
+              <NuxtLink
+                to="/blog-vector"
+                class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
+                :class="{
+                  'bg-stone-100 text-stone-900': $route.path === '/blog-vector',
+                }"
+              >
+                向量化
+              </NuxtLink>
+              <NuxtLink
+                to="/admin"
+                class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
+                :class="{
+                  'bg-stone-100 text-stone-900': $route.path.startsWith('/admin'),
+                }"
+              >
+                文章管理
+              </NuxtLink>
+            </template>
+          </div>
+
+          <!-- 管理员登录/登出 -->
+          <div class="flex items-center gap-2 ml-4">
+            <template v-if="isAdmin">
+              <span class="text-xs text-stone-500">已登录</span>
+              <button
+                @click="handleLogout"
+                class="px-3 py-1.5 rounded-md text-xs text-stone-500 hover:text-stone-800 hover:bg-stone-100/80 transition-all"
+              >
+                退出
+              </button>
+            </template>
+            <button
+              v-else
+              @click="showLoginModal = true"
+              class="px-3 py-1.5 rounded-md text-xs text-stone-500 hover:text-stone-800 hover:bg-stone-100/80 transition-all"
+            >
+              管理员
+            </button>
           </div>
         </div>
       </div>
     </nav>
 
-    <!-- 主内容区 - 自适应高度 -->
+    <!-- 登录模态框 -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showLoginModal"
+          class="fixed inset-0 z-100 flex items-center justify-center p-4"
+          @click.self="showLoginModal = false"
+        >
+          <div class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" @click="showLoginModal = false"></div>
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 class="text-lg font-semibold text-stone-800 mb-4">管理员登录</h3>
+            <div class="flex gap-3">
+              <input
+                v-model="password"
+                type="password"
+                placeholder="输入密码"
+                class="flex-1 px-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                @keyup.enter="handleLogin"
+              />
+              <button
+                @click="handleLogin"
+                class="px-5 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-700 transition-colors"
+              >
+                登录
+              </button>
+            </div>
+            <p v-if="loginError" class="text-xs text-red-500 mt-2">{{ loginError }}</p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- 主内容区 -->
     <main class="flex-1 max-w-5xl w-full mx-auto px-6 py-10">
       <slot />
     </main>
 
-    <!-- 简约页脚 -->
+    <!-- 页脚 -->
     <footer class="border-t border-stone-200/60 bg-stone-50 shrink-0">
       <div class="max-w-5xl mx-auto px-6 py-6">
         <div class="flex justify-between items-center text-sm text-stone-500">
@@ -85,3 +159,44 @@
     </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+const { isAdmin, login, logout } = useAdminAuth();
+
+const showLoginModal = ref(false);
+const password = ref('');
+const loginError = ref('');
+
+/**
+ * 处理登录
+ */
+function handleLogin() {
+  if (!password.value) return;
+  const success = login(password.value);
+  if (success) {
+    showLoginModal.value = false;
+    password.value = '';
+    loginError.value = '';
+  } else {
+    loginError.value = '密码错误';
+  }
+}
+
+/**
+ * 处理登出
+ */
+function handleLogout() {
+  logout();
+}
+</script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

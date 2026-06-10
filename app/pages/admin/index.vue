@@ -30,7 +30,7 @@
     </div>
 
     <!-- 统计卡片 -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-4 gap-4 mb-8">
       <div class="bg-white border border-stone-200/60 rounded-xl p-5 shadow-sm">
         <div class="flex items-center gap-3">
           <div
@@ -52,7 +52,32 @@
           </div>
           <div>
             <p class="text-2xl font-bold text-stone-800">{{ posts.length }}</p>
-            <p class="text-xs text-stone-500">文章总数</p>
+            <p class="text-xs text-stone-500">已发布</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border border-stone-200/60 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center"
+          >
+            <svg
+              class="w-5 h-5 text-amber-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-stone-800">{{ drafts.length }}</p>
+            <p class="text-xs text-stone-500">草稿箱</p>
           </div>
         </div>
       </div>
@@ -86,10 +111,10 @@
       <div class="bg-white border border-stone-200/60 rounded-xl p-5 shadow-sm">
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center"
+            class="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center"
           >
             <svg
-              class="w-5 h-5 text-amber-500"
+              class="w-5 h-5 text-stone-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -112,6 +137,24 @@
       </div>
     </div>
 
+    <!-- Tab 切换 -->
+    <div class="flex items-center gap-2 mb-4">
+      <button
+        @click="activeTab = 'published'"
+        :class="activeTab === 'published' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+      >
+        已发布 ({{ posts.length }})
+      </button>
+      <button
+        @click="activeTab = 'drafts'"
+        :class="activeTab === 'drafts' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+      >
+        草稿箱 ({{ drafts.length }})
+      </button>
+    </div>
+
     <!-- 文章列表 -->
     <div
       class="bg-white border border-stone-200/60 rounded-xl shadow-sm overflow-hidden"
@@ -119,8 +162,11 @@
       <div
         class="px-6 py-4 border-b border-stone-100 flex items-center justify-between"
       >
-        <h2 class="font-semibold text-stone-800">文章列表</h2>
+        <h2 class="font-semibold text-stone-800">
+          {{ activeTab === 'published' ? '已发布文章' : '草稿箱' }}
+        </h2>
         <button
+          v-if="activeTab === 'published'"
           @click="regenerateVectors"
           :disabled="regenerating"
           class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-lg transition-all"
@@ -159,8 +205,8 @@
 
       <div class="divide-y divide-stone-100">
         <div
-          v-for="post in posts"
-          :key="post.path"
+          v-for="post in currentList"
+          :key="post.path + (post.isDraft ? '_draft' : '_published')"
           class="px-6 py-4 hover:bg-stone-50/50 transition-colors flex items-center justify-between group"
         >
           <div class="flex-1 min-w-0 mr-4">
@@ -193,7 +239,7 @@
             class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <NuxtLink
-              :to="`/admin/write?edit=${encodeURIComponent(post.path)}`"
+              :to="`/admin/write?edit=${encodeURIComponent(post.path)}${post.isDraft ? '&fromDraft=1' : ''}`"
               class="p-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-all"
               title="编辑"
             >
@@ -235,7 +281,7 @@
 
         <!-- 空状态 -->
         <div
-          v-if="posts.length === 0"
+          v-if="currentList.length === 0"
           class="px-6 py-12 text-center"
         >
           <div
@@ -326,22 +372,67 @@
 
 <script setup>
 definePageMeta({
-  layout: "admin",
+  layout: "default",
 });
 
-const posts = ref([]);  // 文章列表
+const posts = ref([]);  // 已发布文章列表
+const drafts = ref([]); // 草稿列表
+const activeTab = ref("published"); // 'published' | 'drafts'
 const vectorStats = ref(null); // 向量状态信息
 const regenerating = ref(false); // 是否正在重新向量化
 const toast = ref({ show: false, message: "", type: "success" }); // 提示消息
 
-// 获取文章列表
+// 当前显示的列表
+const currentList = computed(() => {
+  return activeTab.value === "published" ? posts.value : drafts.value;
+});
+
+// 获取已发布文章列表
 const fetchPosts = async () => {
   try {
     const data = await queryCollection("content").all();
-    posts.value = data || [];
+    posts.value = (data || []).map((p) => ({ ...p, isDraft: false }));
   } catch (err) {
-    console.error("获取文章失败:", err);
+    // console.error("获取文章失败:", err);
     posts.value = [];
+  }
+};
+
+// 获取草稿列表
+const fetchDrafts = async () => {
+  try {
+    const res = await $fetch("/api/posts?listDrafts=1");
+    // 草稿不在 queryCollection 中，需要从文件系统读取 frontmatter
+    const draftItems = res?.data || [];
+    drafts.value = await Promise.all(
+      draftItems.map(async (item) => {
+        try {
+          const fileRes = await $fetch(
+            `/api/posts/get?path=${encodeURIComponent(item.path)}&fromDraft=1`
+          );
+          return {
+            path: item.path,
+            slug: item.slug,
+            title: fileRes?.data?.meta?.title || item.slug,
+            description: fileRes?.data?.meta?.description || "草稿",
+            meta: fileRes?.data?.meta || {},
+            isDraft: true,
+          };
+        } catch {
+          return {
+            path: item.path,
+            slug: item.slug,
+            title: item.slug,
+            description: "草稿",
+            meta: {},
+            isDraft: true,
+          };
+        }
+      })
+    );
+  } catch (err) {
+    // console.error("获取草稿失败:", err);
+    drafts.value = [];
   }
 };
 
@@ -351,7 +442,7 @@ const fetchVectorStats = async () => {
     const data = await $fetch("/api/blog-vectorize");
     vectorStats.value = data;
   } catch (err) {
-    console.error("获取向量统计失败:", err);
+    // console.error("获取向量统计失败:", err);
   }
 };
 
@@ -380,21 +471,24 @@ const regenerateVectors = async () => {
 
 // 删除文章
 const deletePost = async (post) => {
-  if (!confirm(`确定要删除文章 "${post.title}" 吗？`)) return;
+  if (!confirm(`确定要删除${post.isDraft ? '草稿' : '文章'} "${post.title}" 吗？`)) return;
 
   try {
     await $fetch("/api/posts", {
       method: "DELETE",
-      body: { path: post.path },
+      body: { path: post.path, fromDraft: post.isDraft },
     });
 
-    // 同时从向量存储中移除该文章
-    await removeFromVectors(post.path);
+    // 已发布文章需同步从向量存储中移除
+    if (!post.isDraft) {
+      await removeFromVectors(post.path);
+    }
 
     // 强制刷新文章列表（清除缓存）
     await refreshNuxtData();
     await fetchPosts();
-    await fetchVectorStats();
+    await fetchDrafts();
+    if (!post.isDraft) await fetchVectorStats();
 
     showToast("删除成功", "success");
   } catch (err) {
@@ -410,7 +504,7 @@ const removeFromVectors = async (path) => {
       body: { path },
     });
   } catch (err) {
-    console.error("从向量存储移除失败:", err);
+    // console.error("从向量存储移除失败:", err);
   }
 };
 
@@ -435,6 +529,7 @@ const formatDate = (dateStr) => {
 
 onMounted(() => {
   fetchPosts();
+  fetchDrafts();
   fetchVectorStats();
 });
 </script>
