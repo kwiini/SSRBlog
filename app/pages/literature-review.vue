@@ -1,15 +1,116 @@
 <template>
   <div>
     <!-- 标题区 -->
-    <div class="mb-10">
-      <div class="flex items-center gap-3 mb-3">
-        <div
-          class="w-1 h-6 bg-linear-to-b from-stone-700 to-stone-500 rounded-full"
-        ></div>
-        <h1 class="text-2xl font-semibold text-stone-800">文献综述</h1>
+    <div class="mb-8 flex items-start justify-between gap-6 flex-wrap">
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="w-1 h-6 bg-linear-to-b from-stone-700 to-stone-500 rounded-full"
+          ></div>
+          <h1 class="text-2xl font-semibold text-stone-800">文献综述</h1>
+        </div>
+        <p class="text-sm text-stone-500 ml-4">
+          上传文献内容，AI 帮你提炼要点、总结创新点，生成可直接汇报的文献综述
+        </p>
       </div>
-      <p class="text-sm text-stone-500 ml-4">
-        上传文献内容，AI 帮你提炼要点、总结创新点，生成可直接汇报的文献综述
+
+      <!-- 用户标识 + 归档入口 -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-stone-500">汇报人</label>
+          <input
+            v-model="userName"
+            @blur="saveUserName"
+            placeholder="可选：填写后将写入归档"
+            class="w-44 px-3 py-1.5 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400 transition-colors"
+          />
+        </div>
+        <button
+          @click="showArchive = !showArchive; if (showArchive) loadArchiveList()"
+          class="px-3 py-1.5 text-xs font-medium bg-white border border-stone-200 rounded-lg hover:border-stone-400 transition-colors flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+          历史归档
+          <span v-if="archiveList.length" class="px-1.5 py-0.5 text-[10px] bg-stone-100 rounded">{{ archiveList.length }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 归档面板 -->
+    <div
+      v-if="showArchive"
+      class="mb-8 bg-white border border-stone-200/60 rounded-2xl p-6"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold text-stone-700">历史归档</h3>
+        <button
+          @click="loadArchiveList"
+          class="text-xs text-stone-500 hover:text-stone-700"
+        >刷新</button>
+      </div>
+      <div v-if="archiveLoading" class="text-xs text-stone-400 py-4 text-center">加载中…</div>
+      <div v-else-if="archiveList.length === 0" class="text-xs text-stone-400 py-6 text-center">
+        还没有归档记录。生成综述后会自动保存到服务器。
+      </div>
+      <div v-else class="space-y-2">
+        <div
+          v-for="item in archiveList"
+          :key="item.id"
+          class="flex items-center gap-4 p-3 border border-stone-100 rounded-lg hover:border-stone-200 transition-colors"
+        >
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-stone-700 truncate">
+              {{ item.field || '（未命名）' }}
+              <span v-if="item.reporter" class="text-stone-400 font-normal">· {{ item.reporter }}</span>
+            </p>
+            <p class="text-xs text-stone-400 mt-0.5">
+              {{ item.paper_count }} 篇文献 · 创建于 {{ formatTimestamp(item.created_at) }}
+              <span v-if="item.updated_at !== item.created_at"> · 更新于 {{ formatTimestamp(item.updated_at) }}</span>
+            </p>
+          </div>
+          <button
+            @click="loadFromArchive(item.id)"
+            class="px-3 py-1 text-xs font-medium text-stone-600 hover:text-stone-900 border border-stone-200 rounded hover:border-stone-400 transition-colors"
+          >打开</button>
+          <button
+            @click="deleteArchive(item.id)"
+            class="px-2 py-1 text-xs text-stone-400 hover:text-red-500 transition-colors"
+          >删除</button>
+        </div>
+      </div>
+
+      <!-- 审计日志折叠区 -->
+      <div class="mt-3 pt-3 border-t border-stone-100">
+        <button
+          @click="showAudit = !showAudit; if (showAudit) loadAuditList()"
+          class="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1"
+        >
+          <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-90': showAudit }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+          操作审计日志
+        </button>
+        <div v-if="showAudit" class="mt-2">
+          <div v-if="auditLoading" class="text-xs text-stone-400 py-2 text-center">加载中…</div>
+          <div v-else-if="auditList.length === 0" class="text-xs text-stone-400 py-2">暂无操作记录</div>
+          <div v-else class="space-y-1 max-h-48 overflow-y-auto">
+            <div
+              v-for="log in auditList"
+              :key="log.id"
+              class="flex items-center gap-2 text-xs py-1 px-2 rounded hover:bg-stone-50"
+            >
+              <span :class="actionColor(log.action)" class="font-medium w-8 shrink-0">{{ actionLabel(log.action) }}</span>
+              <span class="text-stone-500 truncate flex-1">{{ log.detail || log.review_id }}</span>
+              <span class="text-stone-400 shrink-0">{{ formatTimestamp(log.created_at) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-stone-400 mt-3 pt-3 border-t border-stone-100">
+        数据保存在服务器 SQLite 数据库（<code class="px-1 bg-stone-50 rounded">data/literature-review.db</code>），换电脑/换浏览器仍可访问。
       </p>
     </div>
 
@@ -88,8 +189,12 @@
           <p class="text-sm font-medium text-stone-700 truncate group-hover:text-stone-900 transition-colors">
             {{ paper.name }}
           </p>
-          <p class="text-xs text-stone-400 mt-0.5">
-            {{ formatSize(paper.size) }} · {{ paper.content.length }} 字
+          <p class="text-xs text-stone-400 mt-0.5 flex items-center gap-1.5">
+            <span>{{ formatSize(paper.size) }} · {{ paper.content?.length || 0 }} 字</span>
+            <span
+              v-if="!paper.content"
+              class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[10px] font-medium"
+            >需重新上传</span>
           </p>
         </div>
         <button
@@ -136,7 +241,7 @@
                 </div>
                 <div class="min-w-0">
                   <h3 class="text-sm font-semibold text-stone-800 truncate">{{ previewPaper.name }}</h3>
-                  <p class="text-xs text-stone-400">{{ formatSize(previewPaper.size) }} · {{ previewPaper.content.length }} 字</p>
+                  <p class="text-xs text-stone-400">{{ formatSize(previewPaper.size) }} · {{ previewPaper.content?.length || 0 }} 字</p>
                 </div>
               </div>
               <button
@@ -157,9 +262,37 @@
                 :src="previewPaper.blobUrl"
                 class="w-full h-full border-0"
               ></iframe>
-              <!-- 非 PDF 用文本预览 -->
+              <!-- docx 用 mammoth 渲染的 HTML -->
+              <div
+                v-else-if="previewPaper.isDocx"
+                class="h-full overflow-y-auto p-8 docx-preview"
+                v-html="previewPaper.htmlContent || '<p class=\'text-stone-400 text-sm\'>该文档无内容</p>'"
+              ></div>
+              <!-- doc 旧格式不支持预览，提供下载 -->
+              <div v-else-if="previewPaper.isDoc" class="h-full flex flex-col items-center justify-center p-8 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-stone-100 flex items-center justify-center mb-4">
+                  <svg class="w-7 h-7 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p class="text-sm font-medium text-stone-700 mb-1">.doc 格式暂不支持在线预览</p>
+                <p class="text-xs text-stone-400 mb-4">请下载后用 Word 打开，或另存为 .docx 重新上传</p>
+                <a
+                  v-if="previewPaper.blobUrl"
+                  :href="previewPaper.blobUrl"
+                  :download="previewPaper.name"
+                  class="px-4 py-2 bg-stone-800 text-white rounded-lg text-xs font-medium hover:bg-stone-700 transition-colors"
+                >
+                  下载文件
+                </a>
+              </div>
+              <!-- 其他文件用文本预览 -->
               <div v-else class="h-full overflow-y-auto p-6">
-                <pre class="whitespace-pre-wrap text-sm text-stone-700 leading-relaxed font-sans">{{ previewPaper.content }}</pre>
+                <div v-if="!previewPaper.content" class="h-full flex flex-col items-center justify-center text-center">
+                  <p class="text-sm text-stone-500 mb-1">文本内容未保留</p>
+                  <p class="text-xs text-stone-400">为节省存储空间，刷新页面后大文档的文本内容会被丢弃，请重新上传该文件</p>
+                </div>
+                <pre v-else class="whitespace-pre-wrap text-sm text-stone-700 leading-relaxed font-sans">{{ previewPaper.content }}</pre>
               </div>
             </div>
 
@@ -203,6 +336,17 @@
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold text-stone-800">综述结果</h2>
         <div class="flex items-center gap-2">
+          <button
+            class="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-stone-800 hover:bg-stone-700 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            :disabled="savingArchive"
+            @click="saveToArchive"
+          >
+            <svg v-if="!savingArchive" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            <span v-else>保存中…</span>
+            <span v-if="!savingArchive">保存到归档</span>
+          </button>
           <button
             class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1.5"
             @click="copyResult"
@@ -394,6 +538,90 @@
   </div>
 </template>
 
+<style scoped>
+/* docx 预览样式：mammoth 输出的 HTML 节点美化 */
+.docx-preview {
+  color: #1c1917;
+  line-height: 1.75;
+  font-size: 15px;
+  max-width: 820px;
+  margin: 0 auto;
+}
+.docx-preview :deep(h1) {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 1.5rem 0 1rem;
+  color: #0c0a09;
+  border-bottom: 1px solid #e7e5e4;
+  padding-bottom: 0.5rem;
+}
+.docx-preview :deep(h2) {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem;
+  color: #1c1917;
+}
+.docx-preview :deep(h3) {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+  color: #292524;
+}
+.docx-preview :deep(p) {
+  margin: 0 0 0.85rem;
+  text-align: justify;
+}
+.docx-preview :deep(ul),
+.docx-preview :deep(ol) {
+  margin: 0 0 0.85rem 1.5rem;
+}
+.docx-preview :deep(li) {
+  margin-bottom: 0.35rem;
+}
+.docx-preview :deep(strong) {
+  font-weight: 600;
+  color: #0c0a09;
+}
+.docx-preview :deep(em) {
+  font-style: italic;
+  color: #44403c;
+}
+.docx-preview :deep(a) {
+  color: #44403c;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.docx-preview :deep(table) {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.docx-preview :deep(table td),
+.docx-preview :deep(table th) {
+  border: 1px solid #d6d3d1;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.docx-preview :deep(table th) {
+  background: #f5f5f4;
+  font-weight: 600;
+}
+.docx-preview :deep(blockquote) {
+  border-left: 3px solid #a8a29e;
+  padding: 0.25rem 1rem;
+  margin: 0.85rem 0;
+  color: #57534e;
+  background: #fafaf9;
+}
+.docx-preview :deep(img) {
+  max-width: 100%;
+  height: auto;
+  margin: 0.75rem 0;
+  border-radius: 6px;
+}
+</style>
+
 <script setup lang="ts">
 // · 文献条目
 interface Paper {
@@ -401,8 +629,12 @@ interface Paper {
   name: string;
   size: number;
   content: string;
+  contentHash?: string;
   blobUrl?: string;
   isPdf?: boolean;
+  isDocx?: boolean;
+  isDoc?: boolean;
+  htmlContent?: string;
 }
 
 // · 核心内容条目
@@ -426,12 +658,226 @@ interface ReviewResult {
 }
 
 const STORAGE_KEY = 'literature-review-data'; // 本地存储键名
+const USER_ID_KEY = 'literature-review-user-id'; // 用户唯一标识
+const USER_NAME_KEY = 'literature-review-user-name'; // 用户姓名
+const SAVED_REVIEW_ID_KEY = 'literature-review-saved-id'; // 最近保存到服务器的 review id
 
 const isDragging = ref(false); // 是否正在拖动
 const papers = ref<Paper[]>([]); // 文献条目列表
 const generating = ref(false); // 是否正在生成
 const reviewResult = ref<ReviewResult | null>(null); // 审核结果
 const previewPaper = ref<Paper | null>(null); // 预览文献条目
+
+// 用户标识
+const userId = ref('');
+const userName = ref('');
+// 归档列表
+interface ArchiveItem {
+  id: string;
+  user_id: string;
+  user_name?: string;
+  field?: string;
+  reporter?: string;
+  review_date?: string;
+  created_at: number;
+  updated_at: number;
+  paper_count: number;
+}
+const archiveList = ref<ArchiveItem[]>([]);
+const archiveLoading = ref(false);
+const savingArchive = ref(false);
+const showArchive = ref(false);
+
+// 审计日志
+interface AuditItem {
+  id: string;
+  review_id: string;
+  user_id: string;
+  user_name?: string;
+  action: string;
+  detail?: string;
+  created_at: number;
+}
+const auditList = ref<AuditItem[]>([]);
+const auditLoading = ref(false);
+const showAudit = ref(false);
+
+// 生成稳定的用户 id（首次访问时创建，存 localStorage）
+function ensureUserId() {
+  if (typeof window === 'undefined') return;
+  let id = localStorage.getItem(USER_ID_KEY);
+  if (!id) {
+    id = 'u_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem(USER_ID_KEY, id);
+  }
+  userId.value = id;
+  userName.value = localStorage.getItem(USER_NAME_KEY) || '';
+}
+
+function saveUserName() {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(USER_NAME_KEY, userName.value.trim());
+}
+
+// 加载归档列表
+async function loadArchiveList() {
+  if (!userId.value) return;
+  archiveLoading.value = true;
+  try {
+    const res: any = await $fetch('/api/literature-review/list', {
+      query: { userId: userId.value },
+    });
+    archiveList.value = res.data || [];
+  } catch (err) {
+    console.warn('加载归档失败:', err);
+    archiveList.value = [];
+  } finally {
+    archiveLoading.value = false;
+  }
+}
+
+// 保存当前 review 到服务器
+async function saveToArchive() {
+  if (!reviewResult.value) return;
+  if (!userId.value) {
+    ensureUserId();
+  }
+  savingArchive.value = true;
+  try {
+    const savedId = localStorage.getItem(SAVED_REVIEW_ID_KEY) || undefined;
+    const res: any = await $fetch('/api/literature-review/save', {
+      method: 'POST',
+      body: {
+        userId: userId.value,
+        userName: userName.value.trim() || undefined,
+        reviewId: savedId || undefined,
+        field: reviewResult.value.field,
+        background: reviewResult.value.background,
+        innovation: reviewResult.value.innovation,
+        trend: reviewResult.value.trend,
+        thoughts: reviewResult.value.thoughts,
+        reporter: reviewResult.value.reporter,
+        date: reviewResult.value.date,
+        papers: papers.value.map((p) => ({
+          name: p.name,
+          size: p.size,
+          content: p.content,
+          htmlContent: p.htmlContent,
+          isPdf: p.isPdf,
+          isDocx: p.isDocx,
+          isDoc: p.isDoc,
+        })),
+      },
+    });
+    if (res.id) {
+      localStorage.setItem(SAVED_REVIEW_ID_KEY, res.id);
+    }
+    await loadArchiveList();
+  } catch (err: any) {
+    alert('保存到服务器失败：' + (err.message || '未知错误'));
+  } finally {
+    savingArchive.value = false;
+  }
+}
+
+// 从归档恢复
+async function loadFromArchive(id: string) {
+  try {
+    const res: any = await $fetch(`/api/literature-review/${id}`, {
+      query: { userId: userId.value },
+    });
+    const data = res.data;
+    if (!data) return;
+
+    // 恢复 papers（计算 contentHash 用于后续去重）
+    papers.value = await Promise.all(
+      (data.papers || []).map(async (p: any) => ({
+        id: p.id || Math.random().toString(36).substring(2, 9),
+        name: p.name,
+        size: p.size,
+        content: p.content || '',
+        contentHash: await computeHash(p.content || ''),
+        htmlContent: p.htmlContent || '',
+        isPdf: p.isPdf,
+        isDocx: p.isDocx,
+        isDoc: p.isDoc,
+      }))
+    );
+
+    // 恢复 review
+    reviewResult.value = {
+      field: data.field || '',
+      reporter: data.reporter || '',
+      date: data.review_date || new Date().toISOString().split('T')[0],
+      background: data.background || '',
+      coreContents: (data.papers || []).map((p: any) => ({
+        title: p.name,
+        summary: '',
+        method: '',
+        conclusion: '',
+      })),
+      innovation: data.innovation || '',
+      trend: data.trend || '',
+      thoughts: data.thoughts || '',
+    };
+
+    localStorage.setItem(SAVED_REVIEW_ID_KEY, id);
+    saveToStorage();
+    showArchive.value = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err: any) {
+    alert('加载归档失败：' + (err.message || '未知错误'));
+  }
+}
+
+// 删除归档
+async function deleteArchive(id: string) {
+  if (!confirm('确定要删除这条归档吗？此操作不可恢复。')) return;
+  try {
+    await $fetch(`/api/literature-review/${id}`, {
+      method: 'DELETE',
+      query: { userId: userId.value },
+    });
+    if (localStorage.getItem(SAVED_REVIEW_ID_KEY) === id) {
+      localStorage.removeItem(SAVED_REVIEW_ID_KEY);
+    }
+    await loadArchiveList();
+  } catch (err: any) {
+    alert('删除失败：' + (err.message || '未知错误'));
+  }
+}
+
+function formatTimestamp(ts: number): string {
+  const d = new Date(ts);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// 加载审计日志
+async function loadAuditList() {
+  if (!userId.value) return;
+  auditLoading.value = true;
+  try {
+    const res: any = await $fetch('/api/literature-review/audit', {
+      query: { userId: userId.value, limit: 100 },
+    });
+    auditList.value = res.data || [];
+  } catch {
+    auditList.value = [];
+  } finally {
+    auditLoading.value = false;
+  }
+}
+
+function actionLabel(action: string): string {
+  const map: Record<string, string> = { create: '创建', update: '更新', delete: '删除' };
+  return map[action] || action;
+}
+
+function actionColor(action: string): string {
+  const map: Record<string, string> = { create: 'text-emerald-600', update: 'text-blue-600', delete: 'text-red-500' };
+  return map[action] || 'text-stone-600';
+}
 
 // 打开预览
 function openPreview(paper: Paper) {
@@ -461,23 +907,54 @@ function loadFromStorage() {
 }
 
 // 保存到 localStorage
+// 注意：仅持久化元数据，content/blobUrl 不存（content 可能数十万字符撑爆配额，blobUrl 刷新即失效）
 function saveToStorage() {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      papers: papers.value,
-      reviewResult: reviewResult.value,
-    })
-  );
+  try {
+    const slimPapers = papers.value.map((p) => ({
+      id: p.id,
+      name: p.name,
+      size: p.size,
+      contentHash: p.contentHash,
+      isPdf: p.isPdf,
+      isDocx: p.isDocx,
+      isDoc: p.isDoc,
+      // docx 渲染的 HTML 用于预览，可保留（通常较小）
+      htmlContent: p.htmlContent,
+      // 仅当文本较小（<20k）时才持久化 content，否则置空以避免超限
+      content: p.content && p.content.length < 20000 ? p.content : '',
+    }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        papers: slimPapers,
+        reviewResult: reviewResult.value,
+      })
+    );
+  } catch (err) {
+    // 配额超限或其他存储错误静默处理，不阻塞主流程
+    console.warn('localStorage 保存失败:', err);
+  }
 }
 
 // 初始化加载
 loadFromStorage();
+ensureUserId();
+loadArchiveList();
 
 // 生成唯一ID
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
+}
+
+// 计算文本内容的 SHA-256 hash（用于重复检测）
+async function computeHash(text: string): Promise<string> {
+  if (!text) return '';
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 }
 
 // 格式化文件大小
@@ -512,6 +989,29 @@ function readFileAsBlobUrl(file: File): Promise<string> {
   });
 }
 
+// 动态加载 mammoth（仅在需要解析 .docx 时）
+function loadMammoth(): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const w = window as any;
+    if (w.mammoth) return resolve(w.mammoth);
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js';
+    script.onload = () => resolve(w.mammoth);
+    script.onerror = () => reject(new Error('mammoth 加载失败'));
+    document.head.appendChild(script);
+  });
+}
+
+// 将 .docx 解析为 HTML
+async function readDocxAsHtml(file: File): Promise<{ html: string; text: string }> {
+  const mammoth = await loadMammoth();
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.convertToHtml({ arrayBuffer });
+  // 同时提取纯文本供后续摘要使用
+  const textResult = await mammoth.extractRawText({ arrayBuffer });
+  return { html: result.value, text: textResult.value };
+}
+
 // 处理文件选择
 async function handleFileSelect(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -534,26 +1034,65 @@ async function processFiles(files: File[]) {
     return ['txt', 'md', 'pdf', 'doc', 'docx'].includes(ext || '');
   });
 
+  let duplicateCount = 0;
+
   for (const file of validFiles) {
     try {
-      const isPdf = file.name.toLowerCase().endsWith('.pdf');
-      const content = await readFile(file);
+      const lowerName = file.name.toLowerCase();
+      const isPdf = lowerName.endsWith('.pdf');
+      const isDocx = lowerName.endsWith('.docx');
+      const isDoc = lowerName.endsWith('.doc');
+
+      let content = '';
       let blobUrl: string | undefined;
+      let htmlContent: string | undefined;
+
       if (isPdf) {
+        content = await readFile(file);
         blobUrl = await readFileAsBlobUrl(file);
+      } else if (isDocx) {
+        const { html, text } = await readDocxAsHtml(file);
+        htmlContent = html;
+        content = text;
+        blobUrl = await readFileAsBlobUrl(file);
+      } else if (isDoc) {
+        blobUrl = await readFileAsBlobUrl(file);
+        content = '该文件为 .doc 旧版 Word 格式，无法直接预览文本内容。请下载后用 Word 打开。';
+      } else {
+        content = await readFile(file);
       }
+
+      // 重复检测：文件名 + 内容 hash 双重校验
+      const contentHash = await computeHash(content);
+      const isDuplicate = papers.value.some(
+        (p) => p.contentHash === contentHash || (p.name === file.name && p.size === file.size)
+      );
+      if (isDuplicate) {
+        duplicateCount++;
+        continue;
+      }
+
       papers.value.push({
         id: generateId(),
         name: file.name,
         size: file.size,
-        content: content.slice(0, 30000), // 限制长度
+        content,
+        contentHash,
         blobUrl,
         isPdf,
+        isDocx,
+        isDoc,
+        htmlContent,
       });
-    } catch {
-      // 忽略读取失败的文件
+    } catch (err) {
+      console.error('处理文件失败:', file.name, err);
     }
   }
+
+  if (duplicateCount > 0) {
+    alert(`已跳过 ${duplicateCount} 篇重复文献（同名或内容相同）。`);
+  }
+
   saveToStorage();
 }
 
@@ -574,13 +1113,25 @@ function clearAll() {
 // 生成综述
 async function generateReview() {
   if (papers.value.length === 0) return;
+
+  // 过滤掉刷新后丢失 content 的文献，提示用户重新上传
+  const available = papers.value.filter((p) => p.content && p.content.trim().length > 0);
+  if (available.length === 0) {
+    alert('文献内容已失效（刷新页面后大文本不会保留），请重新上传文件后再生成综述。');
+    return;
+  }
+  const skipped = papers.value.length - available.length;
+  if (skipped > 0) {
+    alert(`已自动跳过 ${skipped} 篇内容已失效的文献，请重新上传。`);
+  }
+
   generating.value = true;
 
   try {
     const res: any = await $fetch('/api/literature-review', {
       method: 'POST',
       body: {
-        papers: papers.value.map((p) => ({
+        papers: available.map((p) => ({
           name: p.name,
           content: p.content,
         })),
@@ -601,6 +1152,8 @@ async function generateReview() {
     };
 
     saveToStorage();
+    // 自动持久化到服务器（央企办公室可追溯归档）
+    await saveToArchive();
   } catch (error: any) {
     alert(error.message || '生成失败，请重试');
   } finally {

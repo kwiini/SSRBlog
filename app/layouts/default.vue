@@ -11,15 +11,11 @@
             to="/"
             class="flex items-center gap-2.5 group"
           >
-            <div
-              class="w-7 h-7 bg-stone-800 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-300"
-            >
-              <span class="text-white font-medium text-sm">a</span>
-            </div>
+            <CurataLogo size="sm" />
             <span
               class="text-lg font-medium text-stone-700 group-hover:text-stone-900 transition-colors"
             >
-              aissr
+              Curata
             </span>
           </NuxtLink>
 
@@ -113,14 +109,16 @@
                 v-model="password"
                 type="password"
                 placeholder="输入密码"
+                :disabled="loginLoading"
                 class="flex-1 px-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
                 @keyup.enter="handleLogin"
               />
               <button
                 @click="handleLogin"
-                class="px-5 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-700 transition-colors"
+                :disabled="loginLoading"
+                class="px-5 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-700 transition-colors disabled:opacity-50"
               >
-                登录
+                {{ loginLoading ? '登录中...' : '登录' }}
               </button>
             </div>
             <p v-if="loginError" class="text-xs text-red-500 mt-2">{{ loginError }}</p>
@@ -138,9 +136,9 @@
     <footer class="border-t border-stone-200/60 bg-stone-50 shrink-0">
       <div class="max-w-5xl mx-auto px-6 py-6">
         <div class="flex justify-between items-center text-sm text-stone-500">
-          <p>© 2026 aissr</p>
+          <p>© 2026 Curata</p>
           <a
-            href="https://github.com"
+            href="https://github.com/kwiini"
             target="_blank"
             class="hover:text-stone-700 transition-colors"
           >
@@ -161,32 +159,46 @@
 </template>
 
 <script setup lang="ts">
-const { isAdmin, login, logout } = useAdminAuth();
+const { isAdmin, checkAuth, login, logout } = useAdminAuth();
+const { mode, toggle: toggleColorMode } = useColorMode();
 
 const showLoginModal = ref(false); // 登录模态框是否显示
 const password = ref(''); // 密码输入框
 const loginError = ref(''); // 登录错误提示
+const loginLoading = ref(false); // 登录中
+
+// 页面加载时向服务端确认登录状态
+onMounted(() => {
+  checkAuth();
+});
 
 /**
  * 处理登录
  */
-function handleLogin() {
+async function handleLogin() {
   if (!password.value) return;
-  const success = login(password.value);
-  if (success) {
-    showLoginModal.value = false;
-    password.value = '';
-    loginError.value = '';
-  } else {
-    loginError.value = '密码错误';
+  loginLoading.value = true;
+  loginError.value = '';
+  try {
+    const success = await login(password.value);
+    if (success) {
+      showLoginModal.value = false;
+      password.value = '';
+    } else {
+      loginError.value = '密码错误';
+    }
+  } catch {
+    loginError.value = '登录失败，请重试';
+  } finally {
+    loginLoading.value = false;
   }
 }
 
 /**
  * 处理登出
  */
-function handleLogout() {
-  logout();
+async function handleLogout() {
+  await logout();
 }
 </script>
 

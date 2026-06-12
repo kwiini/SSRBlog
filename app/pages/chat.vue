@@ -568,7 +568,7 @@ const sendMessage = async () => {
   }
 };
 
-useHead({ title: "对话 - aissr" });
+useHead({ title: "对话 - Curata" });
 </script>
 
 <style scoped>

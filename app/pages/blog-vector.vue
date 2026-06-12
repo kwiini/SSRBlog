@@ -517,7 +517,7 @@ onMounted(() => {
   fetchStats();
 });
 
-useHead({ title: "博客向量化 - aissr" });
+useHead({ title: "博客向量化 - Curata" });
 </script>
 
 <style scoped>

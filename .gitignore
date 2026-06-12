@@ -26,6 +26,12 @@ logs
 # markdown files
 content/articles/*.md
 
+# SQLite database files (runtime data, not source)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
 # trae configure
 .trae/*
 

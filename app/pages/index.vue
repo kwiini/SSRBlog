@@ -198,8 +198,8 @@
 
 <script setup>
 useHead({
-  title: "aissr",
-  meta: [{ name: "description", content: "aissr - 关于技术与生活的思考" }],
+  title: "Curata",
+  meta: [{ name: "description", content: "Curata - 内部文献综述工具" }],
 });
 
 /**

@@ -58,9 +58,9 @@
             <div
               class="w-8 h-8 rounded-full bg-linear-to-br from-stone-700 to-stone-800 flex items-center justify-center mr-2.5"
             >
-              <span class="text-xs font-semibold text-white">A</span>
+              <span class="text-xs font-semibold text-white">C</span>
             </div>
-            <span class="font-medium text-stone-700">aissr</span>
+            <span class="font-medium text-stone-700">Curata</span>
           </div>
           <div class="flex items-center gap-1.5">
             <svg
@@ -372,11 +372,11 @@ const backLink = computed(() => {
 });
 
 useHead(() => ({
-  title: post.value?.title ? `${post.value.title} - aissr` : "文章 - aissr",
+  title: post.value?.title ? `${post.value.title} - Curata` : "文章 - Curata",
   meta: [
     {
       name: "description",
-      content: post.value?.description || "aissr 文章详情",
+      content: post.value?.description || "Curata 文章详情",
     },
   ],
 }));

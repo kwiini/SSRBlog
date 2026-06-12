@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* 配置 dark 模式:使用 .dark 类(配合 useColorMode 切换) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* 自然风格基础样式 */
 html {
   scroll-behavior: smooth;
