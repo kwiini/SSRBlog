@@ -469,10 +469,10 @@ const publishPost = async () => {
     // 触发增量向量化 - 只处理当前文章
     vectorizing.value = true;
     try {
-      await $fetch("/api/blog-vectorize", {
-        method: "POST",
-        body: { path: postPath, force: false },
-      });
+      await $fetch("/api/blog/vectorize", {
+      method: "POST",
+      body: { path: postPath, force: false },
+    });
     } catch (vecErr) {
       // console.warn("向量化失败:", vecErr);
     }
@@ -506,12 +506,20 @@ const savePost = async (publish = false) => {
     publish,
   };
 
-  const result = await $fetch("/api/posts", {
+  const result = await $fetch("/api/blog/posts", {
     method: isEditing.value ? "PUT" : "POST",
-    body: articleData,
+    body: {
+      ...articleData,
+      // PUT 时带上原 slug 作 id,服务端用它定位旧文件(支持重命名)
+      id: isEditing.value ? post.value.slug : undefined,
+    },
   });
 
-  return result.data || { path: `/articles/${post.value.slug}` };
+  // 服务端必定返回 data:{ path, slug }(归一化后),不再用原始 slug 兜底
+  if (!result?.data?.path) {
+    throw new Error("服务端未返回文章路径");
+  }
+  return result.data;
 };
 
 // 验证表单

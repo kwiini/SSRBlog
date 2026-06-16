@@ -35,5 +35,8 @@ data/*.db-shm
 # trae configure
 .trae/*
 
-# data files
-.json
+# 用户/账号数据(包含密码 hash,绝对不能入库)
+data/users.json
+
+# RAG 评测用例(可包含业务敏感 prompt/答案)
+data/rag-eval-cases.json

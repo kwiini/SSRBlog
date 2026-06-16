@@ -104,13 +104,24 @@
           <div class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" @click="showLoginModal = false"></div>
           <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 class="text-lg font-semibold text-stone-800 mb-4">管理员登录</h3>
-            <div class="flex gap-3">
+            <div class="flex flex-col gap-3">
               <input
+                v-model="username"
+                type="text"
+                placeholder="用户名"
+                :disabled="loginLoading"
+                autocomplete="username"
+                class="px-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                @keyup.enter="focusPassword"
+              />
+              <input
+                ref="passwordInput"
                 v-model="password"
                 type="password"
                 placeholder="输入密码"
                 :disabled="loginLoading"
-                class="flex-1 px-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                autocomplete="current-password"
+                class="px-4 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
                 @keyup.enter="handleLogin"
               />
               <button
@@ -159,36 +170,52 @@
 </template>
 
 <script setup lang="ts">
-const { isAdmin, checkAuth, login, logout } = useAdminAuth();
+const { isAdmin, currentUser, checkAuth, login, logout, hasPermission } = useAdminAuth();
 const { mode, toggle: toggleColorMode } = useColorMode();
 
 const showLoginModal = ref(false); // 登录模态框是否显示
+const username = ref(''); // 用户名输入框
 const password = ref(''); // 密码输入框
 const loginError = ref(''); // 登录错误提示
 const loginLoading = ref(false); // 登录中
+const passwordInput = ref<HTMLInputElement | null>(null); // 密码框 ref(用户输入完用户名后回车自动聚焦)
 
 // 页面加载时向服务端确认登录状态
 onMounted(() => {
   checkAuth();
 });
 
+// 用户名框回车后,自动聚焦到密码框
+function focusPassword() {
+  passwordInput.value?.focus();
+}
+
 /**
  * 处理登录
  */
 async function handleLogin() {
-  if (!password.value) return;
+  if (!username.value) {
+    loginError.value = '请输入用户名';
+    return;
+  }
+  if (!password.value) {
+    loginError.value = '请输入密码';
+    return;
+  }
   loginLoading.value = true;
   loginError.value = '';
   try {
-    const success = await login(password.value);
+    const success = await login(username.value, password.value);
     if (success) {
       showLoginModal.value = false;
+      username.value = '';
       password.value = '';
     } else {
-      loginError.value = '密码错误';
+      loginError.value = '登录失败';
     }
-  } catch {
-    loginError.value = '登录失败，请重试';
+  } catch (err: any) {
+    // useAdminAuth.login 失败时抛 Error(message = 后端 message)
+    loginError.value = err?.message || '登录失败，请重试';
   } finally {
     loginLoading.value = false;
   }

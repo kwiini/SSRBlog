@@ -6,7 +6,7 @@ import {
   aggregateReview,
   summarizeOnePaper,
   type PaperInput,
-} from "../../utils/review-generator";
+} from "../../services/review.service";
 
 // Map 阶段最大并发数（避免同时打 10+ 个 LLM 请求触发限流）
 const MAP_CONCURRENCY = 3;
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     if (!Array.isArray(papers) || papers.length === 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: "请至少上传一篇文献",
+        message: "请至少上传一篇文献",
       });
     }
 
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     if (validPapers.length === 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: "文献内容为空",
+        message: "文献内容为空",
       });
     }
 
@@ -67,7 +67,8 @@ export default defineEventHandler(async (event) => {
     );
 
     // Reduce：聚合所有摘要生成最终综述（内部自动分批）
-    const review = await aggregateReview(summaries);
+    // 返回 { review, factCheck, citations } 三件套——主流程一等公民
+    const { review, factCheck, citations } = await aggregateReview(summaries);
 
     // 兜底：保证 coreContents 是数组且长度与文献数一致
     if (!Array.isArray(review.coreContents)) {
@@ -86,11 +87,13 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: review,
+      factCheck,         // 完整事实核查报告(含 issues[]),null 表示降级
+      citations,         // 引用解析结果(含 [N] 标记提取 + 合法性验证)
     };
   } catch (error: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || "生成综述失败",
+      message: error.message || "生成综述失败",
     });
   }
 });

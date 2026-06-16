@@ -435,7 +435,7 @@ const loading = ref({
 // 获取统计信息
 const fetchStats = async () => {
   try {
-    const data = await $fetch("/api/blog-vectorize");
+    const data = await $fetch("/api/blog/vectorize");
     stats.value = data;
   } catch (err) {
     // console.error("获取统计失败:", err);
@@ -460,7 +460,7 @@ const vectorize = async () => {
   error.value = "";
 
   try {
-    const data = await $fetch("/api/blog-vectorize", {
+    const data = await $fetch("/api/blog/vectorize", {
       method: "POST",
       body: { force: true },
     });
@@ -480,7 +480,7 @@ const clearVectors = async () => {
   error.value = "";
 
   try {
-    await $fetch("/api/blog-vectorize", { method: "DELETE" });
+    await $fetch("/api/blog/vectorize", { method: "DELETE" });
     await fetchStats();
     searchResults.value = [];
     searched.value = false;
@@ -500,7 +500,7 @@ const search = async () => {
   searched.value = false;
 
   try {
-    const data = await $fetch("/api/blog-search", {
+    const data = await $fetch("/api/blog/search", {
       query: { q: searchQuery.value, topK: "5" },
     });
     searchResults.value = data.results;

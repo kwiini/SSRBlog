@@ -1,14 +1,12 @@
 /**
- * GET /api/literature-review/list?userId=xxx
- * 列出某用户的所有综述归档（按创建时间倒序）
+ * GET /api/literature-review/list
+ * 列出当前用户的所有综述归档（按创建时间倒序）
  */
-import { getDb } from "../../utils/db";
+import { getDb } from "../../core/db";
+import { requireAuth } from "../../core/auth";
 
 export default defineEventHandler((event) => {
-  const userId = getQuery(event).userId as string | undefined;
-  if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: "缺少 userId" });
-  }
+  const { uid: userId } = requireAuth(event);
 
   const db = getDb();
   const rows = db

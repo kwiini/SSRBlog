@@ -299,7 +299,7 @@ const fetchRelatedPosts = async () => {
   if (!post.value?.path) return;
 
   try {
-    const { data } = await $fetch("/api/related-posts", {
+    const { data } = await $fetch("/api/blog/related", {
       query: {
         path: post.value.path,
         topK: "3",

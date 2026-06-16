@@ -1,21 +1,31 @@
 /**
  * POST /api/auth/login
- * 校验密码 → 签发 JWT → 写入 httpOnly cookie
+ * 校验用户名+密码 → 签发 JWT → 写入 httpOnly cookie
  */
-import { verifyPassword, issueToken } from "../../utils/auth";
+import { login, issueToken } from "../../core/auth";
+import { getPermissionsForRole } from "../../core/rbac";
 
 export default defineEventHandler(async (event) => {
-  const { password } = await readBody(event);
+  const { username, password } = await readBody(event);
 
+  if (!username || typeof username !== "string") {
+    throw createError({ statusCode: 400, message: "请输入用户名" });
+  }
   if (!password || typeof password !== "string") {
-    throw createError({ statusCode: 400, statusMessage: "请输入密码" });
+    throw createError({ statusCode: 400, message: "请输入密码" });
   }
 
-  if (!verifyPassword(password)) {
-    throw createError({ statusCode: 401, statusMessage: "密码错误" });
+  const payload = await login(username, password);
+  if (!payload) {
+    throw createError({ statusCode: 401, message: "用户名或密码错误" });
   }
 
-  issueToken(event);
+  issueToken(event, payload);
 
-  return { success: true };
+  return {
+    success: true,
+    role: payload.role,
+    username: payload.username,
+    permissions: getPermissionsForRole(payload.role),
+  };
 });

@@ -401,7 +401,7 @@ const fetchPosts = async () => {
 // 获取草稿列表
 const fetchDrafts = async () => {
   try {
-    const res = await $fetch("/api/posts?listDrafts=1");
+    const res = await $fetch("/api/blog/posts?listDrafts=1");
     // 草稿不在 queryCollection 中，需要从文件系统读取 frontmatter
     const draftItems = res?.data || [];
     drafts.value = await Promise.all(
@@ -439,7 +439,7 @@ const fetchDrafts = async () => {
 // 获取向量统计
 const fetchVectorStats = async () => {
   try {
-    const data = await $fetch("/api/blog-vectorize");
+    const data = await $fetch("/api/blog/vectorize");
     vectorStats.value = data;
   } catch (err) {
     // console.error("获取向量统计失败:", err);
@@ -456,7 +456,7 @@ const isVectorized = (path) => {
 const regenerateVectors = async () => {
   regenerating.value = true;
   try {
-    await $fetch("/api/blog-vectorize", {
+    await $fetch("/api/blog/vectorize", {
       method: "POST",
       body: { force: true },
     });
@@ -474,7 +474,7 @@ const deletePost = async (post) => {
   if (!confirm(`确定要删除${post.isDraft ? '草稿' : '文章'} "${post.title}" 吗？`)) return;
 
   try {
-    await $fetch("/api/posts", {
+    await $fetch("/api/blog/posts", {
       method: "DELETE",
       body: { path: post.path, fromDraft: post.isDraft },
     });
@@ -499,7 +499,7 @@ const deletePost = async (post) => {
 // 从向量存储中移除文章
 const removeFromVectors = async (path) => {
   try {
-    await $fetch("/api/blog-vectorize", {
+    await $fetch("/api/blog/vectorize", {
       method: "DELETE",
       body: { path },
     });

@@ -1,9 +1,11 @@
 /**
  * POST /api/literature-review/save
  * 持久化一篇综述（含全部 papers 的全文），用于央企办公室可追溯归档
- * Body: { userId, userName?, reviewId?, field, background, innovation, trend, thoughts, reporter, date, papers[] }
+ * Body: { userName?, reviewId?, field, background, innovation, trend, thoughts, reporter, date, papers[] }
+ * userId 来自登录态(cookie → requireAuth)
  */
-import { generateId, getDb, logAudit } from "../../utils/db";
+import { generateId, getDb, logAudit } from "../../core/db";
+import { requireAuth } from "../../core/auth";
 
 interface SavePaper {
   name: string;
@@ -16,7 +18,6 @@ interface SavePaper {
 }
 
 interface SaveBody {
-  userId: string;
   userName?: string;
   reviewId?: string;
   field?: string;
@@ -31,13 +32,11 @@ interface SaveBody {
 
 export default defineEventHandler(async (event) => {
   try {
+    const { uid: userId } = requireAuth(event);
     const body = await readBody<SaveBody>(event);
 
-    if (!body?.userId) {
-      throw createError({ statusCode: 400, statusMessage: "缺少 userId" });
-    }
-    if (!Array.isArray(body.papers) || body.papers.length === 0) {
-      throw createError({ statusCode: 400, statusMessage: "papers 不能为空" });
+    if (!Array.isArray(body?.papers) || body.papers.length === 0) {
+      throw createError({ statusCode: 400, message: "papers 不能为空" });
     }
 
     const db = getDb();
@@ -76,14 +75,14 @@ export default defineEventHandler(async (event) => {
         const existing = db
           .prepare(`SELECT user_id FROM reviews WHERE id = ?`)
           .get(body.reviewId) as { user_id: string } | undefined;
-        if (existing && existing.user_id !== body.userId) {
+        if (existing && existing.user_id !== userId) {
           throw new Error("无权修改他人归档");
         }
       }
 
       upsertReview.run(
         reviewId,
-        body.userId,
+        userId,
         body.userName || null,
         body.field || null,
         body.background || null,
@@ -115,7 +114,7 @@ export default defineEventHandler(async (event) => {
       // 审计日志
       logAudit({
         reviewId,
-        userId: body.userId,
+        userId,
         userName: body.userName,
         action: isUpdate ? "update" : "create",
         detail: `${body.papers.length} 篇文献${isUpdate ? "，更新归档" : ""}`,
@@ -128,7 +127,7 @@ export default defineEventHandler(async (event) => {
   } catch (err: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: err.message || "保存失败",
+      message: err.message || "保存失败",
     });
   }
 });

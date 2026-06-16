@@ -500,7 +500,7 @@ const sendMessage = async () => {
     }));
 
   try {
-    const apiEndpoint = useRAG.value ? "/api/rag-chat" : "/api/aichat-stream";
+    const apiEndpoint = useRAG.value ? "/api/chat/rag-chat" : "/api/chat/aichat-stream";
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

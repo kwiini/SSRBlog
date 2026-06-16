@@ -1,15 +1,16 @@
 /**
- * DELETE /api/literature-review/[id]?userId=xxx
+ * DELETE /api/literature-review/[id]
  * 删除一条归档（级联删除 papers），记录审计日志
  */
-import { getDb, logAudit } from "../../utils/db";
+import { getDb, logAudit } from "../../core/db";
+import { requireAuth } from "../../core/auth";
 
 export default defineEventHandler((event) => {
   const id = getRouterParam(event, "id");
-  const userId = getQuery(event).userId as string | undefined;
+  const { uid: userId } = requireAuth(event);
 
-  if (!id || !userId) {
-    throw createError({ statusCode: 400, statusMessage: "参数不完整" });
+  if (!id) {
+    throw createError({ statusCode: 400, message: "缺少 id" });
   }
 
   const db = getDb();
@@ -20,7 +21,7 @@ export default defineEventHandler((event) => {
     .get(id, userId) as { user_name?: string; field?: string } | undefined;
 
   if (!review) {
-    throw createError({ statusCode: 404, statusMessage: "归档不存在或无权限" });
+    throw createError({ statusCode: 404, message: "归档不存在或无权限" });
   }
 
   // 记录审计日志（在删除前）
