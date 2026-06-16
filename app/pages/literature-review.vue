@@ -50,10 +50,15 @@
           class="text-xs text-stone-500 hover:text-stone-700"
         >刷新</button>
       </div>
-      <div v-if="archiveLoading" class="text-xs text-stone-400 py-4 text-center">加载中…</div>
-      <div v-else-if="archiveList.length === 0" class="text-xs text-stone-400 py-6 text-center">
-        还没有归档记录。生成综述后会自动保存到服务器。
-      </div>
+      <!-- 归档列表依赖 auth 态 + localStorage,服务端无法预测,走 ClientOnly 避免 hydration mismatch -->
+      <ClientOnly>
+        <div v-if="archiveLoading" class="text-xs text-stone-400 py-4 text-center">加载中…</div>
+        <div v-else-if="!isLoggedIn" class="text-xs text-stone-500 py-6 text-center">
+          请先在右上角点击「管理员」登录后查看历史归档。
+        </div>
+        <div v-else-if="archiveList.length === 0" class="text-xs text-stone-400 py-6 text-center">
+          还没有归档记录。生成综述后会自动保存到服务器。
+        </div>
       <div v-else class="space-y-2">
         <div
           v-for="item in archiveList"
@@ -112,6 +117,7 @@
       <p class="text-[11px] text-stone-400 mt-3 pt-3 border-t border-stone-100">
         数据保存在服务器 SQLite 数据库（<code class="px-1 bg-stone-50 rounded">data/literature-review.db</code>），换电脑/换浏览器仍可访问。
       </p>
+      </ClientOnly>
     </div>
 
     <!-- 上传区 -->
@@ -331,6 +337,8 @@
     </div>
 
     <!-- 综述结果 -->
+    <!-- reviewResult 是客户端态(打开归档后才有数据),server 渲染时是 null → 包 ClientOnly 避免 hydration mismatch -->
+    <ClientOnly>
     <div v-if="reviewResult" class="space-y-6">
       <!-- 操作栏 -->
       <div class="flex items-center justify-between">
@@ -535,6 +543,7 @@
         </div>
       </div>
     </div>
+    </ClientOnly>
   </div>
 </template>
 
@@ -623,6 +632,11 @@
 </style>
 
 <script setup lang="ts">
+// 文献归档相关接口 (list / save / [id] / audit) 走 admin JWT 鉴权
+// 未登录用户调这些接口会直接 401,页面要按登录态短路
+const { currentUser, checkAuth: recheckAuth } = useAdminAuth();
+const isLoggedIn = computed(() => currentUser.value.isLoggedIn);
+
 // · 文献条目
 interface Paper {
   id: string;
@@ -661,6 +675,9 @@ const STORAGE_KEY = 'literature-review-data'; // 本地存储键名
 const USER_ID_KEY = 'literature-review-user-id'; // 用户唯一标识
 const USER_NAME_KEY = 'literature-review-user-name'; // 用户姓名
 const SAVED_REVIEW_ID_KEY = 'literature-review-saved-id'; // 最近保存到服务器的 review id
+// AI 生成的 per-paper 核心内容 (summary/method/conclusion) 服务端 schema 没存,
+// 改用 localStorage 按 reviewId 索引缓存,这样 "打开归档" 仍能恢复 AI 解析结果
+const CORE_CONTENTS_CACHE_KEY = 'literature-review-core-contents';
 
 const isDragging = ref(false); // 是否正在拖动
 const papers = ref<Paper[]>([]); // 文献条目列表
@@ -721,6 +738,8 @@ function saveUserName() {
 
 // 加载归档列表
 async function loadArchiveList() {
+  // 走 admin JWT 鉴权:未登录直接 return,避免 401
+  if (!isLoggedIn.value) return;
   if (!userId.value) return;
   archiveLoading.value = true;
   try {
@@ -739,44 +758,96 @@ async function loadArchiveList() {
 // 保存当前 review 到服务器
 async function saveToArchive() {
   if (!reviewResult.value) return;
+  if (!isLoggedIn.value) {
+    alert('请先登录后再保存到归档');
+    return;
+  }
   if (!userId.value) {
     ensureUserId();
   }
   savingArchive.value = true;
   try {
+    // 最多自动重试 1 次(用于跨账号后 localStorage 还残留旧 reviewId 的场景)
+    const staleRetry = { used: false };
+    const doSave = async (reviewId?: string) => {
+      const res: any = await $fetch('/api/literature-review/save', {
+        method: 'POST',
+        body: {
+          userId: userId.value,
+          userName: userName.value.trim() || undefined,
+          reviewId,
+          field: reviewResult.value!.field,
+          background: reviewResult.value!.background,
+          innovation: reviewResult.value!.innovation,
+          trend: reviewResult.value!.trend,
+          thoughts: reviewResult.value!.thoughts,
+          reporter: reviewResult.value!.reporter,
+          date: reviewResult.value!.date,
+          papers: papers.value.map((p) => ({
+            name: p.name,
+            size: p.size,
+            content: p.content,
+            htmlContent: p.htmlContent,
+            isPdf: p.isPdf,
+            isDocx: p.isDocx,
+            isDoc: p.isDoc,
+          })),
+        },
+      });
+      return res;
+    };
+
+    let res: any;
     const savedId = localStorage.getItem(SAVED_REVIEW_ID_KEY) || undefined;
-    const res: any = await $fetch('/api/literature-review/save', {
-      method: 'POST',
-      body: {
-        userId: userId.value,
-        userName: userName.value.trim() || undefined,
-        reviewId: savedId || undefined,
-        field: reviewResult.value.field,
-        background: reviewResult.value.background,
-        innovation: reviewResult.value.innovation,
-        trend: reviewResult.value.trend,
-        thoughts: reviewResult.value.thoughts,
-        reporter: reviewResult.value.reporter,
-        date: reviewResult.value.date,
-        papers: papers.value.map((p) => ({
-          name: p.name,
-          size: p.size,
-          content: p.content,
-          htmlContent: p.htmlContent,
-          isPdf: p.isPdf,
-          isDocx: p.isDocx,
-          isDoc: p.isDoc,
-        })),
-      },
-    });
+    try {
+      res = await doSave(savedId);
+    } catch (err: any) {
+      // 403 + data.reason === 'stale_saved_id' = localStorage 残留了别的账号的 reviewId
+      // 清掉后作为新建重试一次
+      if (err?.statusCode === 403 && err?.data?.reason === 'stale_saved_id' && savedId && !staleRetry.used) {
+        staleRetry.used = true;
+        localStorage.removeItem(SAVED_REVIEW_ID_KEY);
+        res = await doSave(undefined);
+      } else {
+        throw err;
+      }
+    }
+
     if (res.id) {
       localStorage.setItem(SAVED_REVIEW_ID_KEY, res.id);
+      // 把 AI 生成的 per-paper 核心内容按 reviewId 索引存到 localStorage,
+      // 下次 loadFromArchive 读这个 cache 把 summary/method/conclusion 补回来
+      cacheCoreContents(res.id, reviewResult.value!.coreContents);
     }
     await loadArchiveList();
   } catch (err: any) {
     alert('保存到服务器失败：' + (err.message || '未知错误'));
   } finally {
     savingArchive.value = false;
+  }
+}
+
+// 读取 coreContents 缓存:{ [reviewId]: CoreContent[] }
+function readCoreContentsCache(): Record<string, CoreContent[]> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CORE_CONTENTS_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, CoreContent[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// 写入 coreContents 缓存
+function cacheCoreContents(reviewId: string, contents: CoreContent[]) {
+  if (typeof window === 'undefined') return;
+  const cache = readCoreContentsCache();
+  cache[reviewId] = contents;
+  try {
+    localStorage.setItem(CORE_CONTENTS_CACHE_KEY, JSON.stringify(cache));
+  } catch (err) {
+    // localStorage 配额超限静默处理
+    console.warn('coreContents 缓存写入失败:', err);
   }
 }
 
@@ -805,17 +876,34 @@ async function loadFromArchive(id: string) {
     );
 
     // 恢复 review
+    // 1. 先用服务端 papers 列表搭骨架(title = 文件名,AI 字段留空)
+    // 2. 再从 localStorage cache 按 reviewId 找回 AI 生成的 summary/method/conclusion
+    //    (服务端 schema 没存这些字段,这是当前架构下的妥协方案)
+    const baseContents: CoreContent[] = (data.papers || []).map((p: any) => ({
+      title: p.name,
+      summary: '',
+      method: '',
+      conclusion: '',
+    }));
+    const cache = readCoreContentsCache();
+    const cached = cache[id];
+    const coreContents: CoreContent[] = baseContents.map((base, idx) => {
+      const hit = cached?.[idx];
+      if (!hit) return base;
+      return {
+        title: hit.title || base.title,
+        summary: hit.summary || '',
+        method: hit.method || '',
+        conclusion: hit.conclusion || '',
+      };
+    });
+
     reviewResult.value = {
       field: data.field || '',
       reporter: data.reporter || '',
       date: data.review_date || new Date().toISOString().split('T')[0],
       background: data.background || '',
-      coreContents: (data.papers || []).map((p: any) => ({
-        title: p.name,
-        summary: '',
-        method: '',
-        conclusion: '',
-      })),
+      coreContents,
       innovation: data.innovation || '',
       trend: data.trend || '',
       thoughts: data.thoughts || '',
@@ -841,6 +929,16 @@ async function deleteArchive(id: string) {
     if (localStorage.getItem(SAVED_REVIEW_ID_KEY) === id) {
       localStorage.removeItem(SAVED_REVIEW_ID_KEY);
     }
+    // 同步清掉 localStorage 里这份归档对应的 coreContents 缓存
+    const cache = readCoreContentsCache();
+    if (id in cache) {
+      delete cache[id];
+      try {
+        localStorage.setItem(CORE_CONTENTS_CACHE_KEY, JSON.stringify(cache));
+      } catch {
+        /* 配额超限静默 */
+      }
+    }
     await loadArchiveList();
   } catch (err: any) {
     alert('删除失败：' + (err.message || '未知错误'));
@@ -855,6 +953,7 @@ function formatTimestamp(ts: number): string {
 
 // 加载审计日志
 async function loadAuditList() {
+  if (!isLoggedIn.value) return;
   if (!userId.value) return;
   auditLoading.value = true;
   try {
@@ -938,9 +1037,28 @@ function saveToStorage() {
 }
 
 // 初始化加载
-loadFromStorage();
-ensureUserId();
-loadArchiveList();
+// 重要:这两个调用读 localStorage,必须在 onMounted 里执行,不能直接放 setup 顶层。
+// 否则 setup 阶段 client 同步读 localStorage 立刻改了 papers/reviewResult/userName,
+// 跟 server SSR (typeof window === 'undefined' 直接 return,ref 全是空) 不一致,
+// 触发 hydration mismatch
+onMounted(() => {
+  loadFromStorage();
+  ensureUserId();
+  recheckAuth();
+});
+// 归档接口需要 admin JWT,直接调用在 setup 阶段会撞 401(default layout 的
+// onMounted(checkAuth) 还没跑完,登录态此时一定是 false)
+// 用 watch 等登录态确定后再加载;同时登录后也会自动刷新归档列表
+watch(
+  currentUser,
+  (u) => {
+    if (u.isLoggedIn) {
+      loadArchiveList();
+      loadAuditList();
+    }
+  },
+  { immediate: false },
+);
 
 // 生成唯一ID
 function generateId(): string {
@@ -1107,12 +1225,21 @@ function removePaper(index: number) {
 function clearAll() {
   papers.value = [];
   reviewResult.value = null;
+  // 清空 = 重新开始,下一份 save 应当创建新归档,不能复用旧的 reviewId 去 UPSERT
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(SAVED_REVIEW_ID_KEY);
+  }
   saveToStorage();
 }
 
 // 生成综述
 async function generateReview() {
   if (papers.value.length === 0) return;
+  // 生成接口需要 review:generate 权限(走 middleware 拦截)
+  if (!isLoggedIn.value) {
+    alert('请先登录后再生成综述');
+    return;
+  }
 
   // 过滤掉刷新后丢失 content 的文献，提示用户重新上传
   const available = papers.value.filter((p) => p.content && p.content.trim().length > 0);
@@ -1142,7 +1269,10 @@ async function generateReview() {
 
     reviewResult.value = {
       field: data.field || '',
-      reporter: reviewResult.value?.reporter || '',
+      // 顶部 userName 兜底:用户填了顶部"汇报人"但没在综述里改的话,这里带过去,
+      // 避免"汇报人信息没有包含到相关内容中"。如果用户在综述结果里手动改过,
+      // reviewResult.value?.reporter 非空,优先用用户的输入
+      reporter: reviewResult.value?.reporter || userName.value.trim() || '',
       date: reviewResult.value?.date || new Date().toISOString().split('T')[0] || '',
       background: data.background || '',
       coreContents: data.coreContents || [],

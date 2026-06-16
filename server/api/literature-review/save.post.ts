@@ -76,7 +76,13 @@ export default defineEventHandler(async (event) => {
           .prepare(`SELECT user_id FROM reviews WHERE id = ?`)
           .get(body.reviewId) as { user_id: string } | undefined;
         if (existing && existing.user_id !== userId) {
-          throw new Error("无权修改他人归档");
+          // 跨账号访问他人 reviewId 是真实权限错误,必须是 403 而不是 500,
+          // 前端据此清掉 localStorage 里过期的 SAVED_REVIEW_ID 并自动作为新建重试
+          throw createError({
+            statusCode: 403,
+            message: "无权修改他人归档",
+            data: { reason: "stale_saved_id" },
+          });
         }
       }
 
