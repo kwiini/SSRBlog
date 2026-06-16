@@ -1,3 +1,6 @@
+
+import { logger } from "../../lib/logger";
+
 /**
  * LLM 响应缓存
  * - LRU 淘汰(按 accessCount)
@@ -69,5 +72,5 @@ export function getLLMCacheStats() {
 /** 清除 LLM 缓存 */
 export function clearLLMCache(): void {
   llmCache.clear();
-  console.log("[LLM Cache] Cache cleared");
+  logger.info("[LLM Cache] Cache cleared");
 }

@@ -13,6 +13,8 @@
 import { estimateTokens } from "../core/llm/tokens"
 import { HistoryPrompts } from "../core/prompts"
 
+import { logger } from "../lib/logger";
+
 export interface HistoryMessage {
   role: "system" | "user" | "assistant"
   content: string
@@ -138,7 +140,7 @@ export async function compressHistory(
       ),
     }
   } catch (err) {
-    console.error("[history-compressor] LLM 压缩失败，退化滑动窗口:", err)
+    logger.error("[history-compressor] LLM 压缩失败，退化滑动窗口:", err)
     return {
       messages: recent,
       compressed: true,

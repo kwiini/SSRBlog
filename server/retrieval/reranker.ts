@@ -12,6 +12,8 @@
 import { getEmbeddingCached as getEmbedding, cosineSimilarity } from "./vector";
 import { RerankPrompts } from "../core/prompts";
 
+import { logger } from "../lib/logger";
+
 interface RerankResult {
   id: string;
   content: string;
@@ -169,7 +171,7 @@ export async function llmRerank(
       .slice(0, topK);
 
   } catch (error) {
-    console.error('LLM 重排序失败:', error);
+    logger.error('LLM 重排序失败:', error);
     return documents.map(doc => ({
       ...doc,
       originalScore: 0,

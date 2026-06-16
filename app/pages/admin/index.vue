@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <!-- 页面标题 -->
     <div class="flex items-center justify-between mb-8">
@@ -393,7 +393,6 @@ const fetchPosts = async () => {
     const data = await queryCollection("content").all();
     posts.value = (data || []).map((p) => ({ ...p, isDraft: false }));
   } catch (err) {
-    // console.error("获取文章失败:", err);
     posts.value = [];
   }
 };
@@ -431,7 +430,6 @@ const fetchDrafts = async () => {
       })
     );
   } catch (err) {
-    // console.error("获取草稿失败:", err);
     drafts.value = [];
   }
 };
@@ -442,7 +440,6 @@ const fetchVectorStats = async () => {
     const data = await $fetch("/api/blog/vectorize");
     vectorStats.value = data;
   } catch (err) {
-    // console.error("获取向量统计失败:", err);
   }
 };
 
@@ -504,7 +501,6 @@ const removeFromVectors = async (path) => {
       body: { path },
     });
   } catch (err) {
-    // console.error("从向量存储移除失败:", err);
   }
 };
 

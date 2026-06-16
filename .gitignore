@@ -32,6 +32,10 @@ data/*.db-journal
 data/*.db-wal
 data/*.db-shm
 
+# Migration backups (e.g. data/blog-vectors.json.bak created by migrate-vectors.ts)
+data/*.bak
+data/*.json.bak
+
 # trae configure
 .trae/*
 

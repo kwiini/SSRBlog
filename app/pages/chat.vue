@@ -523,7 +523,6 @@ const sendMessage = async () => {
         try {
           sources = JSON.parse(decodeURIComponent(sourcesHeader));
         } catch (e) {
-          // console.error("解析来源失败:", e);
         }
       }
     }
@@ -555,7 +554,6 @@ const sendMessage = async () => {
       scrollToBottom();
     }
   } catch (error) {
-    // console.error("发送失败:", error);
     messages.value.push({
       role: "assistant",
       content: "抱歉，请求失败，请稍后重试。",

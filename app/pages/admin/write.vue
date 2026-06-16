@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <!-- 页面标题 -->
     <div class="flex items-center justify-between mb-6">
@@ -425,12 +425,10 @@ const loadPost = async (path, fromDraft = false) => {
         };
         isEditing.value = true;
       } catch (err) {
-        // console.error("加载草稿失败:", err);
         showToast("加载草稿失败", "error");
       }
     }
   } catch (err) {
-    // console.error("加载文章失败:", err);
     showToast("加载文章失败", "error");
   }
 };
@@ -474,7 +472,6 @@ const publishPost = async () => {
       body: { path: postPath, force: false },
     });
     } catch (vecErr) {
-      // console.warn("向量化失败:", vecErr);
     }
 
     showToast(isEditing.value ? "文章更新成功" : "文章发布成功", "success");

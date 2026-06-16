@@ -15,6 +15,8 @@ import { ragQuery, type RAGQueryOptions } from "./rag.service"
 import { callLLM } from "../core/llm/client"
 import { EvalPrompts } from "../core/prompts"
 
+import { logger } from "../lib/logger";
+
 export interface EvalTestCase {
   question: string
   groundTruth?: string
@@ -65,7 +67,7 @@ async function judgeJSON<T>(
     if (!match) return fallback
     return JSON.parse(match[0]) as T
   } catch (err) {
-    console.error("[RAG-Eval] judge 解析失败:", err)
+    logger.error("[RAG-Eval] judge 解析失败:", err)
     return fallback
   }
 }
@@ -164,7 +166,7 @@ async function generateAnswer(prompt: string, caller: LLMCaller): Promise<string
   try {
     return await caller(prompt)
   } catch (err) {
-    console.error("[RAG-Eval] 生成答案失败:", err)
+    logger.error("[RAG-Eval] 生成答案失败:", err)
     return ""
   }
 }

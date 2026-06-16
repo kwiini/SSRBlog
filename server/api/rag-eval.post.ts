@@ -7,6 +7,7 @@ import {
   type EvalOptions,
   type EvalReport,
 } from "../services/eval.service"
+import { logger } from "../lib/logger"
 
 /**
  * POST /api/rag-eval
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event: H3Event): Promise<EvalReport> =>
   }
 
   const report = await evaluateRAG(testCases, body?.options ?? {})
-  console.log(
+  logger.info(
     `[RAG-Eval] ${report.totalCases} cases  ` +
       `P=${report.metrics.contextPrecision.toFixed(3)}  ` +
       `R=${report.metrics.contextRecall.toFixed(3)}  ` +

@@ -632,6 +632,7 @@
 </style>
 
 <script setup lang="ts">
+import { logger } from "../lib/logger";
 // 文献归档相关接口 (list / save / [id] / audit) 走 admin JWT 鉴权
 // 未登录用户调这些接口会直接 401,页面要按登录态短路
 const { currentUser, checkAuth: recheckAuth } = useAdminAuth();
@@ -748,7 +749,7 @@ async function loadArchiveList() {
     });
     archiveList.value = res.data || [];
   } catch (err) {
-    console.warn('加载归档失败:', err);
+    logger.warn('加载归档失败:', err);
     archiveList.value = [];
   } finally {
     archiveLoading.value = false;
@@ -847,7 +848,7 @@ function cacheCoreContents(reviewId: string, contents: CoreContent[]) {
     localStorage.setItem(CORE_CONTENTS_CACHE_KEY, JSON.stringify(cache));
   } catch (err) {
     // localStorage 配额超限静默处理
-    console.warn('coreContents 缓存写入失败:', err);
+    logger.warn('coreContents 缓存写入失败:', err);
   }
 }
 
@@ -1032,7 +1033,7 @@ function saveToStorage() {
     );
   } catch (err) {
     // 配额超限或其他存储错误静默处理，不阻塞主流程
-    console.warn('localStorage 保存失败:', err);
+    logger.warn('localStorage 保存失败:', err);
   }
 }
 
@@ -1203,7 +1204,7 @@ async function processFiles(files: File[]) {
         htmlContent,
       });
     } catch (err) {
-      console.error('处理文件失败:', file.name, err);
+      logger.error('处理文件失败:', file.name, err);
     }
   }
 

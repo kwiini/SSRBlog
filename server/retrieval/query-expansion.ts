@@ -10,6 +10,8 @@
 import { extractKeywords } from "./bm25";
 import { EnhancePrompts, HyDEPrompts, QueryPrompts } from "../core/prompts";
 
+import { logger } from "../lib/logger";
+
 const SYNONYM_DICT: Record<string, string[]> = {
   'js': ['javascript', 'java script'],
   'javascript': ['js', 'java script'],
@@ -93,7 +95,7 @@ export async function generateHypotheticalAnswer(
     const answer = await llmCaller(prompt);
     return answer.trim();
   } catch (error) {
-    console.error('生成假设答案失败:', error);
+    logger.error('生成假设答案失败:', error);
     return query;
   }
 }
@@ -164,7 +166,7 @@ export async function rewriteQuery(
       ?.slice(0, 80) ?? ""
     return rewritten || basic
   } catch (error) {
-    console.error("[query-rewrite] LLM 改写失败，回退到 basic:", error)
+    logger.error("[query-rewrite] LLM 改写失败，回退到 basic:", error)
     return basic
   }
 }
@@ -213,7 +215,7 @@ export async function stepBackQuery(
       ?.slice(0, 100) ?? ""
     return cleaned || null
   } catch (err) {
-    console.error("[stepBackQuery] LLM 调用失败:", err)
+    logger.error("[stepBackQuery] LLM 调用失败:", err)
     return null
   }
 }
@@ -261,7 +263,7 @@ export async function decomposeQuery(
       .slice(0, 4)
     return lines.length > 0 ? lines : []
   } catch (err) {
-    console.error("[decomposeQuery] LLM 调用失败:", err)
+    logger.error("[decomposeQuery] LLM 调用失败:", err)
     return []
   }
 }
@@ -337,7 +339,7 @@ export async function enhanceQuery(
         result.strategies.push("stepBack")
       }
     } catch (err) {
-      console.error("[enhanceQuery] step-back 失败（已跳过）:", err)
+      logger.error("[enhanceQuery] step-back 失败（已跳过）:", err)
     }
   }
 
@@ -353,7 +355,7 @@ export async function enhanceQuery(
         result.strategies.push("decompose")
       }
     } catch (err) {
-      console.error("[enhanceQuery] decompose 失败（已跳过）:", err)
+      logger.error("[enhanceQuery] decompose 失败（已跳过）:", err)
     }
   }
 
@@ -363,7 +365,7 @@ export async function enhanceQuery(
       result.hypotheticalDoc = await generateHypotheticalAnswer(query, options.llmCaller)
       result.strategies.push("hyde")
     } catch (error) {
-      console.error("HyDE 生成失败:", error)
+      logger.error("HyDE 生成失败:", error)
     }
   }
 

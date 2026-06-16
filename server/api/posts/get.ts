@@ -1,11 +1,6 @@
 import { promises as fs } from "fs";
-import { join } from "path";
 import { parseFrontmatter } from "../../retrieval/frontmatter";
-import {
-  resolvePostFilePath,
-  POSTS_CONTENT_DIR as CONTENT_DIR,
-  POSTS_DRAFT_DIR as DRAFT_DIR,
-} from "../../retrieval/post-path";
+import { resolvePostFilePath } from "../../retrieval/post-path";
 
 /**
  * 读取单篇文章原始内容

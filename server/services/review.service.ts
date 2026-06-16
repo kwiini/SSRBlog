@@ -15,6 +15,8 @@ import { extractKeySections } from "../processors/text-extractor"
 import { ReviewPrompts } from "../core/prompts"
 import { estimateTokens } from "../core/llm/tokens";
 
+import { logger } from "../lib/logger";
+
 export interface PaperInput {
   name: string;
   content: string;
@@ -411,7 +413,7 @@ export async function aggregateReview(summaries: PaperSummary[]): Promise<Review
 
 /**
  * 事实核查包装层(导出为独立函数,便于测试和复用)
- * 失败不阻塞主流程,只 console.error
+ * 失败不阻塞主流程,只 logger.error
  */
 export async function runFactCheckSafe(
   review: any,
@@ -421,7 +423,7 @@ export async function runFactCheckSafe(
     const report = await factCheckReview(review, summaries)
     return report
   } catch (err) {
-    console.error("[review-generator] fact-check failed (non-fatal):", err)
+    logger.error("[review-generator] fact-check failed (non-fatal):", err)
     return null
   }
 }

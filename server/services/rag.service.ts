@@ -19,6 +19,8 @@ import { compressContext } from "../processors/context-compressor"
 import { callLLM } from "../core/llm/client"
 import { RAGPrompts } from "../core/prompts"
 
+import { logger } from "../lib/logger";
+
 interface SearchResult {
   content: string;
   source: string;
@@ -73,7 +75,7 @@ async function retrieveWithEnhancedQueries(
     allQueries.add(enhanced.hypotheticalDoc);
   }
 
-  console.log(
+  logger.info(
     `[RAG] enhanced strategies=${enhanced.strategies.join(",") || "none"} ` +
     `isComplex=${enhanced.isComplex} queries=${allQueries.size}`,
   );

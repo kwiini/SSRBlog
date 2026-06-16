@@ -438,7 +438,6 @@ const fetchStats = async () => {
     const data = await $fetch("/api/blog/vectorize");
     stats.value = data;
   } catch (err) {
-    // console.error("获取统计失败:", err);
   }
 };
 

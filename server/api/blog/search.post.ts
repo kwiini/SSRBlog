@@ -9,6 +9,7 @@
 
 import {
   getEmbeddingCached as getEmbedding,
+  cosineSimilarity,
 } from "../../retrieval/vector";
 import { extractKeywords } from "../../retrieval/bm25";
 import {
@@ -92,7 +93,7 @@ async function getRelatedArticles(
 
   for (const chunk of allChunks) {
     if (chunk.source === currentPath) continue;
-    const sim = cosineSim(currentEmbedding, chunk.embedding);
+    const sim = cosineSimilarity(currentEmbedding, chunk.embedding);
     const existing = articleScores.get(chunk.source);
     if (existing) {
       existing.score += sim;
@@ -119,19 +120,6 @@ async function getRelatedArticles(
     metadata: { title: a.title, path: a.path, index: 0, total: 1 },
     similarity: a.avgScore,
   }));
-}
-
-/** 局部 cosineSimilarity(related.ts / hybrid.ts 还要用,这里只内联给本文件) */
-function cosineSim(a: number[], b: number[]): number {
-  if (a.length !== b.length) return 0;
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i]! * b[i]!;
-    na += a[i]! * a[i]!;
-    nb += b[i]! * b[i]!;
-  }
-  if (na === 0 || nb === 0) return 0;
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
 export default defineEventHandler(async (event) => {

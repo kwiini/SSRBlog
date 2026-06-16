@@ -5,10 +5,12 @@
  */
 import { bootstrapAdmin } from "../core/user-store";
 
+import { logger } from "../lib/logger";
+
 export default defineNitroPlugin(async () => {
   try {
     await bootstrapAdmin();
   } catch (err) {
-    console.error("[server-plugin] bootstrap admin failed:", err);
+    logger.error("[server-plugin] bootstrap admin failed:", err);
   }
 });

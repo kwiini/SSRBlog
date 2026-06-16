@@ -12,6 +12,8 @@ import { join } from "node:path"
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypto"
 import { isValidRole, type Role } from "./rbac"
 
+import { logger } from "../lib/logger";
+
 export interface StoredUser {
   id: string
   username: string
@@ -130,7 +132,7 @@ export async function bootstrapAdmin(): Promise<void> {
   }
   file.users.push(admin)
   await writeFile(file)
-  console.log(`[user-store] bootstrapped admin user "${username}" (set ADMIN_PASSWORD to change)`)
+  logger.info(`[user-store] bootstrapped admin user "${username}" (set ADMIN_PASSWORD to change)`)
 }
 
 /* ─── CRUD ───────────────────────────────────────────── */

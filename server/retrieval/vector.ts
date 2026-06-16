@@ -12,6 +12,8 @@
 
 import { createHash } from "crypto";
 
+import { logger } from "../lib/logger";
+
 // · 缓存条目
 interface CacheEntry {
   embedding: number[];
@@ -81,7 +83,7 @@ function cleanupCache(): void {
   }
 
   if (cleaned > 0) {
-    console.log(
+    logger.info(
       `[Embedding Cache] Cleaned ${cleaned} entries, remaining: ${embeddingCache.size}`,
     );
   }
@@ -291,7 +293,7 @@ export function getCacheStats() {
 /** 清除 embedding 缓存 */
 export function clearCache(): void {
   embeddingCache.clear();
-  console.log("[Embedding Cache] Cache cleared");
+  logger.info("[Embedding Cache] Cache cleared");
 }
 
 /** 余弦相似度 */
@@ -305,9 +307,9 @@ export function cosineSimilarity(vec1: number[], vec2: number[]): number {
   let norm2 = 0;
 
   for (let i = 0; i < vec1.length; i++) {
-    dotProduct += (vec1[i] ?? 0) * (vec2[i] ?? 0);
-    norm1 += (vec1[i] ?? 0) * (vec1[i] ?? 0);
-    norm2 += (vec2[i] ?? 0) * (vec2[i] ?? 0);
+    dotProduct += vec1[i]! * vec2[i]!;
+    norm1 += vec1[i]! * vec1[i]!;
+    norm2 += vec2[i]! * vec2[i]!;
   }
 
   if (norm1 === 0 || norm2 === 0) {

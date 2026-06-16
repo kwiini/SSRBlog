@@ -12,6 +12,8 @@ import { SystemPrompts } from "../prompts";
 import { acquireLLMSlot } from "./rate-limiter";
 import { getFromLLMCache, saveToLLMCache } from "./cache";
 
+import { logger } from "../../lib/logger";
+
 interface LLMMessage {
   role: "system" | "user" | "assistant";
   content: string;
@@ -91,7 +93,7 @@ export async function callLLM(message: string): Promise<string> {
 
     return content;
   } catch (error) {
-    console.error("LLM call failed:", error);
+    logger.error("LLM call failed:", error);
     throw error;
   } finally {
     release();

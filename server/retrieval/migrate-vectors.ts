@@ -20,6 +20,7 @@ import {
   closeVectorDb,
   type ChunkRecord,
 } from "./vector-db";
+import { logger } from "../lib/logger";
 
 interface OldVectorStore {
   version: string;
@@ -91,14 +92,14 @@ async function main() {
   try {
     const r = await migrateFromJson();
     if (r.jsonMissing) {
-      console.log(`[migrate] JSON 不存在,跳过(data/curata.db 当前 ${getVectorDb().prepare("SELECT COUNT(*) AS n FROM vec_chunks").get() as any} 条)`);
+      logger.info(`[migrate] JSON 不存在,跳过(data/curata.db 当前 ${getVectorDb().prepare("SELECT COUNT(*) AS n FROM vec_chunks").get() as any} 条)`);
     } else if (r.migrated > 0) {
-      console.log(`[migrate] 成功迁移 ${r.migrated} 条 → ${r.backupPath}`);
+      logger.info(`[migrate] 成功迁移 ${r.migrated} 条 → ${r.backupPath}`);
     } else {
-      console.log(`[migrate] JSON 为空,已备份到 ${r.backupPath}`);
+      logger.info(`[migrate] JSON 为空,已备份到 ${r.backupPath}`);
     }
   } catch (e) {
-    console.error("[migrate] 失败:", e);
+    logger.error("[migrate] 失败:", e);
     process.exit(1);
   } finally {
     closeVectorDb();

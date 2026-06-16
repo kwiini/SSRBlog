@@ -25,7 +25,9 @@ import { migrateFromJson } from "../../retrieval/migrate-vectors";
 import { parseFrontmatter } from "../../retrieval/frontmatter";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { resolvePostFilePath } from "~~/server/retrieval/post-path";
+import { resolvePostFilePath } from "../../retrieval/post-path";
+
+import { logger } from "../../lib/logger";
 
 interface VectorizedChunk {
   id: string;
@@ -50,10 +52,10 @@ async function ensureMigrated() {
   try {
     const r = await migrateFromJson();
     if (r.migrated > 0) {
-      console.log(`[vectorize] 自动迁移 ${r.migrated} 条 chunks from JSON → ${r.backupPath}`);
+      logger.info(`[vectorize] 自动迁移 ${r.migrated} 条 chunks from JSON → ${r.backupPath}`);
     }
   } catch (e) {
-    console.warn("[vectorize] 迁移失败,继续运行:", e);
+    logger.warn("[vectorize] 迁移失败,继续运行:", e);
   }
 }
 
@@ -63,7 +65,7 @@ async function getAllBlogPosts() {
     await fs.access(CONTENT_DIR);
     await readMarkdownFiles(CONTENT_DIR, posts);
   } catch {
-    console.warn("Content directory not found");
+    logger.warn("Content directory not found");
   }
   return posts;
 }
@@ -126,10 +128,10 @@ async function vectorizeAllBlogs(): Promise<number> {
 
   let total = 0;
   for (const post of posts) {
-    console.log(`Processing: ${post.title}`);
+    logger.info(`Processing: ${post.title}`);
     const markdown = post.body?.value || "";
     if (!markdown) {
-      console.warn(`No content for: ${post.title}`);
+      logger.warn(`No content for: ${post.title}`);
       continue;
     }
     const chunks = splitMarkdownToChunks(markdown, post.path, {
@@ -153,7 +155,7 @@ async function vectorizeAllBlogs(): Promise<number> {
     deleteBySource(post.path);
     upsertChunks(records.map(toChunkRecord));
     total += records.length;
-    console.log(`  ✓ ${chunks.length} chunks`);
+    logger.info(`  ✓ ${chunks.length} chunks`);
   }
   return total;
 }
@@ -179,7 +181,7 @@ async function vectorizeSinglePost(postPath: string): Promise<number> {
     : rawTitle;
   const markdown = body || "";
   if (!markdown.trim()) {
-    console.warn(`No content for: ${title}`);
+    logger.warn(`No content for: ${title}`);
     return 0;
   }
 
@@ -242,12 +244,12 @@ export default defineEventHandler(async (event) => {
       const body = await readBody(event);
       const { force = false, path } = body;
 
-      console.log("Starting blog vectorization...");
+      logger.info("Starting blog vectorization...");
       const startTime = Date.now();
 
       let count: number;
       if (path) {
-        console.log(`Incremental vectorization for: ${path}`);
+        logger.info(`Incremental vectorization for: ${path}`);
         count = await vectorizeSinglePost(path);
       } else {
         if (!force && countChunks() > 0) {
@@ -262,7 +264,7 @@ export default defineEventHandler(async (event) => {
       }
 
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      console.log(`Vectorization completed in ${duration}s`);
+      logger.info(`Vectorization completed in ${duration}s`);
 
       return {
         success: true,

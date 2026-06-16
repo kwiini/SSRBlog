@@ -5,6 +5,8 @@ import { callLLM } from "../../core/llm/client";
 import { streamLLM, type LLMMessage } from "../../core/llm/stream-client";
 import { compressHistory } from "../../processors/history-compressor";
 
+import { logger } from "../../lib/logger";
+
 /**
  * POST /api/chat/rag-chat
  * RAG 流式对话(检索 + LLM 生成,带来源标注)
@@ -46,9 +48,9 @@ export default defineEventHandler(async (event: H3Event) => {
       userContent = ragResult.prompt;
       retrievedContext = ragResult.context;
 
-      console.log(`[RAG] 查询: "${message.substring(0, 50)}..."`);
-      console.log(`[RAG] 关键词: ${ragResult.keywords.join(", ")}`);
-      console.log(`[RAG] 检索到 ${ragResult.context.length} 条上下文`);
+      logger.info(`[RAG] 查询: "${message.substring(0, 50)}..."`);
+      logger.info(`[RAG] 关键词: ${ragResult.keywords.join(", ")}`);
+      logger.info(`[RAG] 检索到 ${ragResult.context.length} 条上下文`);
 
       if (ragResult.context.length > 0) {
         const avgScore =
@@ -56,10 +58,10 @@ export default defineEventHandler(async (event: H3Event) => {
             (sum, c) => sum + (c.hybridScore || c.similarity),
             0,
           ) / retrievedContext.length;
-        console.log(`[RAG] 平均相关度: ${(avgScore * 100).toFixed(1)}%`);
+        logger.info(`[RAG] 平均相关度: ${(avgScore * 100).toFixed(1)}%`);
       }
     } catch (error) {
-      console.error("RAG 检索失败:", error);
+      logger.error("RAG 检索失败:", error);
     }
   }
 
