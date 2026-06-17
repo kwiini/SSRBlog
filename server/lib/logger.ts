@@ -5,7 +5,8 @@
 
 import { consola } from "consola";
 
-const level = process.env.NODE_ENV === "production" ? 3 /* info */ : 4 /* debug */;
+const level =
+  process.env.NODE_ENV === "production" ? 3 /* info */ : 4; /* debug */
 consola.level = level;
 
 // 统一 tag,所有日志带 [curata] 前缀,便于 grep

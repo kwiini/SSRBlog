@@ -8,9 +8,7 @@
  * 启动时自动跑一次性迁移:从老的 data/blog-vectors.json 读出来,写进 vec0,JSON 改名 .bak
  */
 
-import {
-  splitMarkdownToChunks,
-} from "../../retrieval/chunker";
+import { splitMarkdownToChunks } from "../../retrieval/chunker";
 import { getEmbeddingsCached as getEmbeddings } from "../../retrieval/vector";
 import {
   upsertChunks,
@@ -52,7 +50,9 @@ async function ensureMigrated() {
   try {
     const r = await migrateFromJson();
     if (r.migrated > 0) {
-      logger.info(`[vectorize] 自动迁移 ${r.migrated} 条 chunks from JSON → ${r.backupPath}`);
+      logger.info(
+        `[vectorize] 自动迁移 ${r.migrated} 条 chunks from JSON → ${r.backupPath}`,
+      );
     }
   } catch (e) {
     logger.warn("[vectorize] 迁移失败,继续运行:", e);
@@ -90,7 +90,7 @@ async function readMarkdownFiles(dir: string, posts: any[]) {
       const fileNameTitle = entry.name
         .replace(".md", "")
         .split("-")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
 
       posts.push({
@@ -185,10 +185,13 @@ async function vectorizeSinglePost(postPath: string): Promise<number> {
     return 0;
   }
 
-  const chunks = splitMarkdownToChunks(markdown, postPath, { title, path: postPath });
+  const chunks = splitMarkdownToChunks(markdown, postPath, {
+    title,
+    path: postPath,
+  });
   if (chunks.length === 0) return 0;
 
-  const texts = chunks.map(c => c.content);
+  const texts = chunks.map((c) => c.content);
   const embeddings = await getEmbeddings(texts);
 
   const records: ChunkRecord[] = chunks.map((c, i) => ({
@@ -211,7 +214,12 @@ async function vectorizeSinglePost(postPath: string): Promise<number> {
 function getStats() {
   const total = countChunks();
   if (total === 0) {
-    return { exists: false, chunkCount: 0, articleCount: 0, articles: [] as Array<{ path: string; chunks: number }> };
+    return {
+      exists: false,
+      chunkCount: 0,
+      articleCount: 0,
+      articles: [] as Array<{ path: string; chunks: number }>,
+    };
   }
   const chunks = getAllChunks();
   const articleMap = new Map<string, number>();
@@ -222,7 +230,10 @@ function getStats() {
     exists: true,
     chunkCount: total,
     articleCount: articleMap.size,
-    articles: Array.from(articleMap.entries()).map(([path, chunks]) => ({ path, chunks })),
+    articles: Array.from(articleMap.entries()).map(([path, chunks]) => ({
+      path,
+      chunks,
+    })),
   };
 }
 
@@ -235,7 +246,10 @@ export default defineEventHandler(async (event) => {
       const stats = getStats();
       return { success: true, ...stats };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "获取统计失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "获取统计失败",
+      });
     }
   }
 
@@ -276,7 +290,10 @@ export default defineEventHandler(async (event) => {
         },
       };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "向量化失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "向量化失败",
+      });
     }
   }
 
@@ -285,7 +302,10 @@ export default defineEventHandler(async (event) => {
       const n = clearAllChunks();
       return { success: true, message: `已清空 ${n} 条`, cleared: n };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "清空失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "清空失败",
+      });
     }
   }
 

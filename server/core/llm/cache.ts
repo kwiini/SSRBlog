@@ -1,4 +1,3 @@
-
 import { logger } from "../../lib/logger";
 
 /**
@@ -15,9 +14,9 @@ interface LLMEntry {
 }
 
 const LLM_CACHE_CONFIG = {
-  maxSize: 500,               // 最大缓存条目数
-  ttl: 24 * 60 * 60 * 1000,   // 缓存有效期 24 小时
-  cleanupInterval: 60 * 60 * 1000,  // 清理间隔 1 小时
+  maxSize: 500, // 最大缓存条目数
+  ttl: 24 * 60 * 60 * 1000, // 缓存有效期 24 小时
+  cleanupInterval: 60 * 60 * 1000, // 清理间隔 1 小时
 };
 
 const llmCache = new Map<string, LLMEntry>();
@@ -30,8 +29,9 @@ function cleanupLLMCache(): void {
     }
   }
   if (llmCache.size > LLM_CACHE_CONFIG.maxSize) {
-    const sorted = Array.from(llmCache.entries())
-      .sort((a, b) => a[1].accessCount - b[1].accessCount);
+    const sorted = Array.from(llmCache.entries()).sort(
+      (a, b) => a[1].accessCount - b[1].accessCount,
+    );
     const toDelete = sorted.slice(0, sorted.length - LLM_CACHE_CONFIG.maxSize);
     for (const [key] of toDelete) llmCache.delete(key);
   }

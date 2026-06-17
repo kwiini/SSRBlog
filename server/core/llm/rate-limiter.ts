@@ -10,11 +10,11 @@
 const LLM_LIMITER_DEFAULTS = {
   maxConcurrency: 5,
   maxQueue: 200,
-}
+};
 
 function readLimiterConfig() {
-  const envConc = Number(process.env.LLM_MAX_CONCURRENCY)
-  const envQueue = Number(process.env.LLM_MAX_QUEUE)
+  const envConc = Number(process.env.LLM_MAX_CONCURRENCY);
+  const envQueue = Number(process.env.LLM_MAX_QUEUE);
   return {
     maxConcurrency:
       envConc > 0
@@ -26,16 +26,16 @@ function readLimiterConfig() {
         ? envQueue
         : Number(useRuntimeConfig().llmMaxQueue) ||
           LLM_LIMITER_DEFAULTS.maxQueue,
-  }
+  };
 }
 
 class LLMSemaphore {
-  private active = 0
-  private queue: Array<() => void> = []
-  private cfg: { maxConcurrency: number; maxQueue: number }
+  private active = 0;
+  private queue: Array<() => void> = [];
+  private cfg: { maxConcurrency: number; maxQueue: number };
 
   constructor() {
-    this.cfg = readLimiterConfig()
+    this.cfg = readLimiterConfig();
   }
 
   /**
@@ -49,31 +49,28 @@ class LLMSemaphore {
           new Error(
             `LLM 调用队列已满(${this.queue.length}/${this.cfg.maxQueue}),请稍后再试`,
           ),
-        )
-        return
+        );
+        return;
       }
       this.queue.push(() => {
-        this.active++
-        let released = false
+        this.active++;
+        let released = false;
         const release = () => {
-          if (released) return
-          released = true
-          this.active = Math.max(0, this.active - 1)
-          this.pump()
-        }
-        resolve(release)
-      })
-      this.pump()
-    })
+          if (released) return;
+          released = true;
+          this.active = Math.max(0, this.active - 1);
+          this.pump();
+        };
+        resolve(release);
+      });
+      this.pump();
+    });
   }
 
   private pump() {
-    while (
-      this.active < this.cfg.maxConcurrency &&
-      this.queue.length > 0
-    ) {
-      const next = this.queue.shift()!
-      next()
+    while (this.active < this.cfg.maxConcurrency && this.queue.length > 0) {
+      const next = this.queue.shift()!;
+      next();
     }
   }
 
@@ -82,11 +79,11 @@ class LLMSemaphore {
       active: this.active,
       queued: this.queue.length,
       ...this.cfg,
-    }
+    };
   }
 }
 
-const llmSemaphore = new LLMSemaphore()
+const llmSemaphore = new LLMSemaphore();
 
 /**
  * 拿一个 LLM 调用槽位
@@ -94,12 +91,12 @@ const llmSemaphore = new LLMSemaphore()
  *  - 队列满时 reject,调用方应捕获并返回 503
  */
 export async function acquireLLMSlot(): Promise<() => void> {
-  return llmSemaphore.acquire()
+  return llmSemaphore.acquire();
 }
 
 /**
  * 查看限流器状态(监控用)
  */
 export function getLLMLimiterStats() {
-  return llmSemaphore.stats()
+  return llmSemaphore.stats();
 }

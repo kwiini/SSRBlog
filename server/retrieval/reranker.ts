@@ -53,7 +53,7 @@ export async function embeddingRerank(
     };
     score?: number;
   }>,
-  options: RerankOptions = {}
+  options: RerankOptions = {},
 ): Promise<RerankResult[]> {
   if (documents.length === 0) return [];
 
@@ -69,7 +69,11 @@ export async function embeddingRerank(
       const titleEmbedding = await getEmbedding(doc.metadata.title);
       const titleScore = cosineSimilarity(queryEmbedding, titleEmbedding);
 
-      const keywordScore = calculateKeywordScore(query, doc.content, doc.metadata.title);
+      const keywordScore = calculateKeywordScore(
+        query,
+        doc.content,
+        doc.metadata.title,
+      );
 
       const lengthScore = Math.min(1, 300 / doc.content.length);
 
@@ -82,13 +86,13 @@ export async function embeddingRerank(
       return {
         ...doc,
         originalScore: doc.score || vectorScore,
-        rerankScore
+        rerankScore,
       };
-    })
+    }),
   );
 
   return reranked
-    .filter(r => r.rerankScore >= minScore)
+    .filter((r) => r.rerankScore >= minScore)
     .sort((a, b) => b.rerankScore - a.rerankScore)
     .slice(0, topK);
 }
@@ -96,7 +100,11 @@ export async function embeddingRerank(
 /**
  * 关键词匹配分数
  */
-function calculateKeywordScore(query: string, content: string, title: string): number {
+function calculateKeywordScore(
+  query: string,
+  content: string,
+  title: string,
+): number {
   const queryWords = extractWords(query);
   const contentWords = extractWords(content);
   const titleWords = extractWords(title);
@@ -104,8 +112,12 @@ function calculateKeywordScore(query: string, content: string, title: string): n
   let score = 0;
 
   for (const word of queryWords) {
-    const titleMatches = titleWords.filter(w => w.includes(word) || word.includes(w)).length;
-    const contentMatches = contentWords.filter(w => w.includes(word) || word.includes(w)).length;
+    const titleMatches = titleWords.filter(
+      (w) => w.includes(word) || word.includes(w),
+    ).length;
+    const contentMatches = contentWords.filter(
+      (w) => w.includes(word) || word.includes(w),
+    ).length;
 
     score += titleMatches * 0.3 + Math.min(contentMatches * 0.05, 0.2);
   }
@@ -116,9 +128,9 @@ function calculateKeywordScore(query: string, content: string, title: string): n
 function extractWords(text: string): string[] {
   return text
     .toLowerCase()
-    .replace(/[^\u4e00-\u9fa5a-z0-9]/g, ' ')
+    .replace(/[^\u4e00-\u9fa5a-z0-9]/g, " ")
     .split(/\s+/)
-    .filter(w => w.length >= 2);
+    .filter((w) => w.length >= 2);
 }
 
 /**
@@ -138,15 +150,18 @@ export async function llmRerank(
     };
   }>,
   llmCaller: (prompt: string) => Promise<string>,
-  options: { topK?: number } = {}
+  options: { topK?: number } = {},
 ): Promise<RerankResult[]> {
   if (documents.length === 0) return [];
 
   const { topK = documents.length } = options;
 
   const docsText = documents
-    .map((doc, idx) => `[${idx + 1}] 标题: ${doc.metadata.title}\n内容: ${doc.content.substring(0, 200)}...`)
-    .join('\n\n');
+    .map(
+      (doc, idx) =>
+        `[${idx + 1}] 标题: ${doc.metadata.title}\n内容: ${doc.content.substring(0, 200)}...`,
+    )
+    .join("\n\n");
 
   const prompt = RerankPrompts.llmCrossEncoder(query, docsText);
 
@@ -162,20 +177,19 @@ export async function llmRerank(
       return {
         ...doc,
         originalScore: 0,
-        rerankScore: llmScore
+        rerankScore: llmScore,
       };
     });
 
     return reranked
       .sort((a, b) => b.rerankScore - a.rerankScore)
       .slice(0, topK);
-
   } catch (error) {
-    logger.error('LLM 重排序失败:', error);
-    return documents.map(doc => ({
+    logger.error("LLM 重排序失败:", error);
+    return documents.map((doc) => ({
       ...doc,
       originalScore: 0,
-      rerankScore: 0.5
+      rerankScore: 0.5,
     }));
   }
 }
@@ -185,14 +199,14 @@ export async function llmRerank(
  */
 export function reciprocalRankFusion(
   rankings: Array<Array<{ id: string; score: number }>>,
-  k: number = 60
+  k: number = 60,
 ): Array<{ id: string; score: number }> {
   const scores = new Map<string, number>();
 
   for (const ranking of rankings) {
     for (let i = 0; i < ranking.length; i++) {
       const item = ranking[i];
-      const currentScore = item?.id ? (scores.get(item.id) || 0) : 0;
+      const currentScore = item?.id ? scores.get(item.id) || 0 : 0;
       if (item?.id) {
         scores.set(item.id, currentScore + 1 / (k + i + 1));
       }
@@ -221,20 +235,20 @@ export async function mmrRerank(
     };
     score: number;
   }>,
-  options: { topK?: number; lambda?: number } = {}
-): Promise<Array<typeof documents[0] & { mmrScore: number }>> {
+  options: { topK?: number; lambda?: number } = {},
+): Promise<Array<(typeof documents)[0] & { mmrScore: number }>> {
   const { topK = documents.length, lambda = 0.5 } = options;
 
   if (documents.length === 0) return [];
 
   const docEmbeddings = await Promise.all(
-    documents.map(async doc => ({
+    documents.map(async (doc) => ({
       doc,
-      embedding: await getEmbedding(doc.content)
-    }))
+      embedding: await getEmbedding(doc.content),
+    })),
   );
 
-  const selected: Array<typeof documents[0] & { mmrScore: number }> = [];
+  const selected: Array<(typeof documents)[0] & { mmrScore: number }> = [];
   const remaining = [...docEmbeddings];
 
   while (selected.length < topK && remaining.length > 0) {
@@ -250,7 +264,9 @@ export async function mmrRerank(
 
       let maxSim = 0;
       for (const selectedItem of selected) {
-        const selectedEmbedding = docEmbeddings.find(de => de.doc.id === selectedItem.id)?.embedding;
+        const selectedEmbedding = docEmbeddings.find(
+          (de) => de.doc.id === selectedItem.id,
+        )?.embedding;
         if (selectedEmbedding) {
           const sim = cosineSimilarity(embedding, selectedEmbedding);
           maxSim = Math.max(maxSim, sim);

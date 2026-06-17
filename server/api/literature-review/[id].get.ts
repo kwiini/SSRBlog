@@ -15,9 +15,7 @@ export default defineEventHandler((event) => {
 
   const db = getDb();
   const review = db
-    .prepare(
-      `SELECT * FROM reviews WHERE id = ? AND user_id = ?`
-    )
+    .prepare(`SELECT * FROM reviews WHERE id = ? AND user_id = ?`)
     .get(id, userId) as Record<string, any> | undefined;
 
   if (!review) {
@@ -31,7 +29,7 @@ export default defineEventHandler((event) => {
       FROM review_papers
       WHERE review_id = ?
       ORDER BY sort_order ASC
-      `
+      `,
     )
     .all(id) as any[];
 

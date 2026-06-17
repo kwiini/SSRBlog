@@ -12,18 +12,17 @@
 
 export const SystemPrompts = {
   /** 通用助手(aichat / llm.callLLM) */
-  assistant:
-    "你是一个有帮助的AI助手，请用中文回答问题。",
+  assistant: "你是一个有帮助的AI助手，请用中文回答问题。",
   /** RAG 模式:拿到参考资料时基于资料回答,拿不到直接答 */
   rag: "你是一个有帮助的AI助手。当提供参考资料时，请基于这些资料回答问题；如果没有相关资料，请直接回答用户问题。",
-} as const
+} as const;
 
 /* ──────────── RAG 任务提示 ──────────── */
 
 function getRelevanceLevel(score: number): string {
-  if (score >= 0.7) return "高"
-  if (score >= 0.5) return "中"
-  return "低"
+  if (score >= 0.7) return "高";
+  if (score >= 0.5) return "中";
+  return "低";
 }
 
 export const RAGPrompts = {
@@ -46,27 +45,25 @@ ${question}
   withContext: (
     question: string,
     context: {
-      hybridScore?: number
-      similarity?: number
-      content: string
-      metadata: { title: string }
+      hybridScore?: number;
+      similarity?: number;
+      content: string;
+      metadata: { title: string };
     }[],
   ) => {
     const sortedContext = context
       .slice()
-      .sort(
-        (a, b) => (b.hybridScore || 0) - (a.hybridScore || 0),
-      )
+      .sort((a, b) => (b.hybridScore || 0) - (a.hybridScore || 0))
       .map((item, index) => {
         const relevance = getRelevanceLevel(
           item.hybridScore || item.similarity || 0,
-        )
+        );
         const score = (
-          ((item.hybridScore || item.similarity) || 0) * 100
-        ).toFixed(1)
-        return `[${index + 1}] [相关度:${relevance} ${score}%] 来源：${item.metadata.title}\n内容：${item.content}`
+          (item.hybridScore || item.similarity || 0) * 100
+        ).toFixed(1);
+        return `[${index + 1}] [相关度:${relevance} ${score}%] 来源：${item.metadata.title}\n内容：${item.content}`;
       })
-      .join("\n\n---\n\n")
+      .join("\n\n---\n\n");
 
     return `你是博客内容的智能助手。请基于以下参考资料回答用户问题。
 
@@ -87,7 +84,7 @@ ${sortedContext}
 ## 用户问题:
 ${question}
 
-请根据上述要求回答问题:`
+请根据上述要求回答问题:`;
   },
 
   /**
@@ -102,10 +99,10 @@ ${question}
         (item, index) =>
           `[${index + 1}] ${item.metadata.title}\n${item.content}`,
       )
-      .join("\n\n")
-    return `基于以下内容回答问题：\n\n${contextText}\n\n问题：${question}\n\n请根据资料回答，标注来源编号。`
+      .join("\n\n");
+    return `基于以下内容回答问题：\n\n${contextText}\n\n问题：${question}\n\n请根据资料回答，标注来源编号。`;
   },
-} as const
+} as const;
 
 /* ──────────── HyDE(query-expansion) ──────────── */
 
@@ -122,7 +119,7 @@ export const HyDEPrompts = {
 请生成一段 100-200 字的假设文档内容：
 
 假设文档：`,
-} as const
+} as const;
 
 export const QueryPrompts = {
   /**
@@ -143,7 +140,7 @@ export const QueryPrompts = {
 原始问题：${query}
 
 改写后：`,
-} as const
+} as const;
 
 /* ──────────── History 压缩(history-compressor) ──────────── */
 
@@ -168,7 +165,7 @@ export const HistoryPrompts = {
 ${historyText}
 
 前情提要:`,
-} as const
+} as const;
 
 /* ──────────── Step-back / Decomposition(query-expansion) ──────────── */
 
@@ -230,7 +227,7 @@ ${query}
 - 子问题各自独立可检索,不互相依赖
 - 最多 4 个子问题
 - 单个问题不拆:shouldDecompose=false, subQuestions=[原问题]`,
-} as const
+} as const;
 
 /* ──────────── LLM Cross-Encoder 重排(reranker) ──────────── */
 
@@ -255,7 +252,7 @@ ${docsText}
 }
 
 只返回 JSON,不要其他内容。`,
-} as const
+} as const;
 
 /* ──────────── RAG 评估(rag-eval) ──────────── */
 
@@ -314,7 +311,7 @@ score = supported 的声明数 / 总声明数;没有声明时 score=1.0。`,
 {"relevance": 0.0 到 1.0 之间的小数, "reason": "一句话说明"}
 
 0=完全跑题,1=完美切题。`,
-} as const
+} as const;
 
 /* ──────────── 综述生成(review-generator) ──────────── */
 
@@ -385,7 +382,11 @@ ${papersText}
 4. 严格输出纯 JSON`,
 
   /** Merge 阶段:多批中间综述 → 最终综述 */
-  merge: (intermediateCount: number, summariesCount: number, partsText: string) =>
+  merge: (
+    intermediateCount: number,
+    summariesCount: number,
+    partsText: string,
+  ) =>
     `你是一位学术文献综述专家。以下是对 ${summariesCount} 篇文献分 ${intermediateCount} 批生成的中间综述，请将它们合并为一份完整、连贯的最终综述。
 
 # 各批综述内容
@@ -458,4 +459,4 @@ ${reviewJson}
 - verdict=revise: 存在少数(1-2 条)可疑声明,综述整体可用但需标注
 - verdict=fail: 存在多条严重无依据声明,综述不可信
 - score=1.0 表示完全可信,0.0 表示完全不可信`,
-} as const
+} as const;

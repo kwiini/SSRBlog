@@ -41,7 +41,8 @@
               to="/literature-review"
               class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
               :class="{
-                'bg-stone-100 text-stone-900': $route.path === '/literature-review',
+                'bg-stone-100 text-stone-900':
+                  $route.path === '/literature-review',
               }"
             >
               文献综述
@@ -62,7 +63,8 @@
                 to="/admin"
                 class="px-3 py-1.5 rounded-md text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 transition-all"
                 :class="{
-                  'bg-stone-100 text-stone-900': $route.path.startsWith('/admin'),
+                  'bg-stone-100 text-stone-900':
+                    $route.path.startsWith('/admin'),
                 }"
               >
                 文章管理
@@ -101,9 +103,16 @@
           class="fixed inset-0 z-100 flex items-center justify-center p-4"
           @click.self="showLoginModal = false"
         >
-          <div class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" @click="showLoginModal = false"></div>
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 class="text-lg font-semibold text-stone-800 mb-4">管理员登录</h3>
+          <div
+            class="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+            @click="showLoginModal = false"
+          ></div>
+          <div
+            class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+          >
+            <h3 class="text-lg font-semibold text-stone-800 mb-4">
+              管理员登录
+            </h3>
             <div class="flex flex-col gap-3">
               <input
                 v-model="username"
@@ -129,10 +138,15 @@
                 :disabled="loginLoading"
                 class="px-5 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-700 transition-colors disabled:opacity-50"
               >
-                {{ loginLoading ? '登录中...' : '登录' }}
+                {{ loginLoading ? "登录中..." : "登录" }}
               </button>
             </div>
-            <p v-if="loginError" class="text-xs text-red-500 mt-2">{{ loginError }}</p>
+            <p
+              v-if="loginError"
+              class="text-xs text-red-500 mt-2"
+            >
+              {{ loginError }}
+            </p>
           </div>
         </div>
       </Transition>
@@ -170,13 +184,13 @@
 </template>
 
 <script setup lang="ts">
-const { isAdmin, currentUser, checkAuth, login, logout, hasPermission } = useAdminAuth();
-const { mode, toggle: toggleColorMode } = useColorMode();
+const { isAdmin, checkAuth, login, logout } = useAdminAuth();
+// const { mode, toggle: toggleColorMode } = useColorMode();
 
 const showLoginModal = ref(false); // 登录模态框是否显示
-const username = ref(''); // 用户名输入框
-const password = ref(''); // 密码输入框
-const loginError = ref(''); // 登录错误提示
+const username = ref(""); // 用户名输入框
+const password = ref(""); // 密码输入框
+const loginError = ref(""); // 登录错误提示
 const loginLoading = ref(false); // 登录中
 const passwordInput = ref<HTMLInputElement | null>(null); // 密码框 ref(用户输入完用户名后回车自动聚焦)
 
@@ -195,27 +209,27 @@ function focusPassword() {
  */
 async function handleLogin() {
   if (!username.value) {
-    loginError.value = '请输入用户名';
+    loginError.value = "请输入用户名";
     return;
   }
   if (!password.value) {
-    loginError.value = '请输入密码';
+    loginError.value = "请输入密码";
     return;
   }
   loginLoading.value = true;
-  loginError.value = '';
+  loginError.value = "";
   try {
     const success = await login(username.value, password.value);
     if (success) {
       showLoginModal.value = false;
-      username.value = '';
-      password.value = '';
+      username.value = "";
+      password.value = "";
     } else {
-      loginError.value = '登录失败';
+      loginError.value = "登录失败";
     }
   } catch (err: any) {
     // useAdminAuth.login 失败时抛 Error(message = 后端 message)
-    loginError.value = err?.message || '登录失败，请重试';
+    loginError.value = err?.message || "登录失败，请重试";
   } finally {
     loginLoading.value = false;
   }

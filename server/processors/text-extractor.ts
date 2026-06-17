@@ -16,13 +16,47 @@ interface SectionMatch {
   priority: number; // 1=核心 2=次要 3=辅助
 }
 
-const SECTION_PATTERNS: Array<{ name: string; regex: RegExp; priority: number }> = [
-  { name: "abstract", regex: /(?:^|\n)\s*(?:#+\s*)?(?:abstract|summary|摘\s*要|概\s*要|摘\s*录)[:：\s]*\n?/i, priority: 1 },
-  { name: "conclusion", regex: /(?:^|\n)\s*(?:#+\s*)?(?:conclusions?|concluding\s+remarks?|结\s*论|总\s*结|结\s*语|结\s*束\s*语)[:：\s]*\n?/i, priority: 1 },
-  { name: "method", regex: /(?:^|\n)\s*(?:#+\s*)?(?:method(?:ology|ologies|s)?|materials?\s+and\s+methods?|experimental\s+(?:section|setup)|方\s*法|材\s*料\s*与\s*方\s*法|研\s*究\s*方\s*法|实\s*验\s*方\s*法)[:：\s]*\n?/i, priority: 2 },
-  { name: "result", regex: /(?:^|\n)\s*(?:#+\s*)?(?:results?|findings?|experiments?(?:\s+and\s+results?)?|结\s*果|实\s*验\s*结\s*果|研\s*究\s*结\s*果)[:：\s]*\n?/i, priority: 2 },
-  { name: "introduction", regex: /(?:^|\n)\s*(?:#+\s*)?(?:introduction|引\s*言|前\s*言|绪\s*论|1[\s.、]*(?:Introduction|引言))[:：\s]*\n?/i, priority: 3 },
-  { name: "discussion", regex: /(?:^|\n)\s*(?:#+\s*)?(?:discussion|讨\s*论|分\s*析\s*与\s*讨\s*论)[:：\s]*\n?/i, priority: 3 },
+const SECTION_PATTERNS: Array<{
+  name: string;
+  regex: RegExp;
+  priority: number;
+}> = [
+  {
+    name: "abstract",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:abstract|summary|摘\s*要|概\s*要|摘\s*录)[:：\s]*\n?/i,
+    priority: 1,
+  },
+  {
+    name: "conclusion",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:conclusions?|concluding\s+remarks?|结\s*论|总\s*结|结\s*语|结\s*束\s*语)[:：\s]*\n?/i,
+    priority: 1,
+  },
+  {
+    name: "method",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:method(?:ology|ologies|s)?|materials?\s+and\s+methods?|experimental\s+(?:section|setup)|方\s*法|材\s*料\s*与\s*方\s*法|研\s*究\s*方\s*法|实\s*验\s*方\s*法)[:：\s]*\n?/i,
+    priority: 2,
+  },
+  {
+    name: "result",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:results?|findings?|experiments?(?:\s+and\s+results?)?|结\s*果|实\s*验\s*结\s*果|研\s*究\s*结\s*果)[:：\s]*\n?/i,
+    priority: 2,
+  },
+  {
+    name: "introduction",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:introduction|引\s*言|前\s*言|绪\s*论|1[\s.、]*(?:Introduction|引言))[:：\s]*\n?/i,
+    priority: 3,
+  },
+  {
+    name: "discussion",
+    regex:
+      /(?:^|\n)\s*(?:#+\s*)?(?:discussion|讨\s*论|分\s*析\s*与\s*讨\s*论)[:：\s]*\n?/i,
+    priority: 3,
+  },
 ];
 
 const STOP_KEYWORDS = [
@@ -76,11 +110,16 @@ export function extractKeySections(text: string, maxLength = 6000): string {
 
   const uniqueMatches = new Map<number, SectionMatch>();
   for (const m of matches) {
-    if (!uniqueMatches.has(m.start) || uniqueMatches.get(m.start)!.priority > m.priority) {
+    if (
+      !uniqueMatches.has(m.start) ||
+      uniqueMatches.get(m.start)!.priority > m.priority
+    ) {
       uniqueMatches.set(m.start, m);
     }
   }
-  const deduped = Array.from(uniqueMatches.values()).sort((a, b) => a.start - b.start);
+  const deduped = Array.from(uniqueMatches.values()).sort(
+    (a, b) => a.start - b.start,
+  );
 
   if (deduped.length === 0) {
     const headLen = Math.floor(maxLength * 0.5);
@@ -97,7 +136,7 @@ export function extractKeySections(text: string, maxLength = 6000): string {
   let total = 0;
 
   const ordered = [...deduped].sort(
-    (a, b) => a.priority - b.priority || a.start - b.start
+    (a, b) => a.priority - b.priority || a.start - b.start,
   );
 
   for (const sec of ordered) {
@@ -105,9 +144,10 @@ export function extractKeySections(text: string, maxLength = 6000): string {
     const raw = text.slice(sec.start, sec.end).trim();
     if (!raw) continue;
     const remaining = maxLength - total;
-    const slice = raw.length > maxPerSection
-      ? raw.slice(0, maxPerSection) + "\n[…本节截断…]"
-      : raw.slice(0, remaining);
+    const slice =
+      raw.length > maxPerSection
+        ? raw.slice(0, maxPerSection) + "\n[…本节截断…]"
+        : raw.slice(0, remaining);
     parts.push(`【${labelOf(sec.name)}】\n${slice}`);
     total += slice.length;
   }

@@ -53,7 +53,7 @@ async function searchBlogs(
   const queryEmbedding = await getEmbedding(query);
   const hits = searchByVector(queryEmbedding, { topK, threshold: 0.3 });
   const keywords = extractKeywords(query);
-  return hits.map(h => ({
+  return hits.map((h) => ({
     ...hitToResult(h),
     content: highlightKeywords(h.content, keywords),
   }));
@@ -80,7 +80,7 @@ async function getRelatedArticles(
   const allChunks = getAllChunks();
   if (allChunks.length === 0) return [];
 
-  const currentChunks = allChunks.filter(c => c.source === currentPath);
+  const currentChunks = allChunks.filter((c) => c.source === currentPath);
   if (currentChunks.length === 0) return [];
 
   // 用首条 chunk 的 embedding 作为"文章指纹"(历史实现就是这个口径,保留兼容)
@@ -109,11 +109,11 @@ async function getRelatedArticles(
   }
 
   const sorted = Array.from(articleScores.values())
-    .map(a => ({ ...a, avgScore: a.score / a.count }))
+    .map((a) => ({ ...a, avgScore: a.score / a.count }))
     .sort((a, b) => b.avgScore - a.avgScore)
     .slice(0, topK);
 
-  return sorted.map(a => ({
+  return sorted.map((a) => ({
     id: `related_${a.path}`,
     content: "",
     source: a.path,
@@ -128,7 +128,10 @@ export default defineEventHandler(async (event) => {
     const { q, topK = "5", related, path } = query;
 
     if (related === "true" && path) {
-      const results = await getRelatedArticles(path as string, parseInt(topK as string, 10));
+      const results = await getRelatedArticles(
+        path as string,
+        parseInt(topK as string, 10),
+      );
       return { success: true, results, count: results.length };
     }
 
@@ -139,6 +142,9 @@ export default defineEventHandler(async (event) => {
     const results = await searchBlogs(q, parseInt(topK as string, 10));
     return { success: true, query: q, results, count: results.length };
   } catch (error: any) {
-    throw createError({ statusCode: 500, message: error.message || "搜索失败" });
+    throw createError({
+      statusCode: 500,
+      message: error.message || "搜索失败",
+    });
   }
 });

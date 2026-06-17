@@ -66,7 +66,9 @@ export function hashMessages(model: string, messages: LLMMessage[]): string {
 /**
  * 流式 LLM 调用
  */
-export async function streamLLM(opts: StreamLLMOptions): Promise<StreamLLMHandle> {
+export async function streamLLM(
+  opts: StreamLLMOptions,
+): Promise<StreamLLMHandle> {
   const cfg = readConfig();
   if (!cfg.apiKey) {
     throw createError({ statusCode: 500, message: "LLM API Key 未配置" });
@@ -124,7 +126,8 @@ function createUpstreamStream(
   let full = "";
   let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   let upstreamCancelled = false;
-  let upstreamController: ReadableStreamDefaultController<Uint8Array> | null = null;
+  let upstreamController: ReadableStreamDefaultController<Uint8Array> | null =
+    null;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -152,7 +155,9 @@ function createUpstreamStream(
       if (!response.ok) {
         release();
         const text = await response.text();
-        controller.error(new Error(`LLM API error: ${response.status} - ${text}`));
+        controller.error(
+          new Error(`LLM API error: ${response.status} - ${text}`),
+        );
         return;
       }
 
@@ -190,7 +195,11 @@ function createUpstreamStream(
       } catch (err) {
         controller.error(err);
       } finally {
-        try { reader.releaseLock(); } catch { /* already released */ }
+        try {
+          reader.releaseLock();
+        } catch {
+          /* already released */
+        }
         release();
       }
     },

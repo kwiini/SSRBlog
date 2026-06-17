@@ -38,7 +38,7 @@ const DEFAULT_OPTIONS: ChunkOptions = {
     "！",
     "；",
     "\n",
-    " "
+    " ",
   ],
 };
 
@@ -126,24 +126,22 @@ function findBestSplitPoint(
  * 从 Markdown 内容中提取纯文本
  */
 export function extractTextFromMarkdown(markdown: string): string {
-  return (
-    markdown
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/`([^`]+)`/g, "$1")
-      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/<[^>]+>/g, "")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/(\*\*|__)(.+?)\1/g, "$2")
-      .replace(/(\*|_)(.+?)\1/g, "$2")
-      .replace(/^>\s?/gm, "")
-      .replace(/^[-*+]\s+/gm, "")
-      .replace(/^\d+\.\s+/gm, "")
-      .replace(/^-{3,}$/gm, "")
-      .replace(/\s+/g, " ")
-      .replace(/\n{2,}/g, "\n")
-      .trim()
-  );
+  return markdown
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(\*|_)(.+?)\1/g, "$2")
+    .replace(/^>\s?/gm, "")
+    .replace(/^[-*+]\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/^-{3,}$/gm, "")
+    .replace(/\s+/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 }
 
 function generateChunkId(source: string, index: number): string {

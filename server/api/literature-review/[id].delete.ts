@@ -17,7 +17,9 @@ export default defineEventHandler((event) => {
 
   // 先查出归档信息用于审计日志
   const review = db
-    .prepare(`SELECT user_name, field FROM reviews WHERE id = ? AND user_id = ?`)
+    .prepare(
+      `SELECT user_name, field FROM reviews WHERE id = ? AND user_id = ?`,
+    )
     .get(id, userId) as { user_name?: string; field?: string } | undefined;
 
   if (!review) {
@@ -33,7 +35,10 @@ export default defineEventHandler((event) => {
     detail: review.field ? `删除归档：${review.field}` : "删除归档",
   });
 
-  db.prepare(`DELETE FROM reviews WHERE id = ? AND user_id = ?`).run(id, userId);
+  db.prepare(`DELETE FROM reviews WHERE id = ? AND user_id = ?`).run(
+    id,
+    userId,
+  );
 
   return { success: true };
 });

@@ -141,14 +141,22 @@
     <div class="flex items-center gap-2 mb-4">
       <button
         @click="activeTab = 'published'"
-        :class="activeTab === 'published' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'"
+        :class="
+          activeTab === 'published'
+            ? 'bg-stone-800 text-white'
+            : 'bg-white text-stone-600 hover:bg-stone-50'
+        "
         class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
       >
         已发布 ({{ posts.length }})
       </button>
       <button
         @click="activeTab = 'drafts'"
-        :class="activeTab === 'drafts' ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'"
+        :class="
+          activeTab === 'drafts'
+            ? 'bg-stone-800 text-white'
+            : 'bg-white text-stone-600 hover:bg-stone-50'
+        "
         class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
       >
         草稿箱 ({{ drafts.length }})
@@ -163,7 +171,7 @@
         class="px-6 py-4 border-b border-stone-100 flex items-center justify-between"
       >
         <h2 class="font-semibold text-stone-800">
-          {{ activeTab === 'published' ? '已发布文章' : '草稿箱' }}
+          {{ activeTab === "published" ? "已发布文章" : "草稿箱" }}
         </h2>
         <button
           v-if="activeTab === 'published'"
@@ -375,7 +383,7 @@ definePageMeta({
   layout: "default",
 });
 
-const posts = ref([]);  // 已发布文章列表
+const posts = ref([]); // 已发布文章列表
 const drafts = ref([]); // 草稿列表
 const activeTab = ref("published"); // 'published' | 'drafts'
 const vectorStats = ref(null); // 向量状态信息
@@ -407,7 +415,7 @@ const fetchDrafts = async () => {
       draftItems.map(async (item) => {
         try {
           const fileRes = await $fetch(
-            `/api/posts/get?path=${encodeURIComponent(item.path)}&fromDraft=1`
+            `/api/posts/get?path=${encodeURIComponent(item.path)}&fromDraft=1`,
           );
           return {
             path: item.path,
@@ -427,7 +435,7 @@ const fetchDrafts = async () => {
             isDraft: true,
           };
         }
-      })
+      }),
     );
   } catch (err) {
     drafts.value = [];
@@ -436,11 +444,8 @@ const fetchDrafts = async () => {
 
 // 获取向量统计
 const fetchVectorStats = async () => {
-  try {
-    const data = await $fetch("/api/blog/vectorize");
-    vectorStats.value = data;
-  } catch (err) {
-  }
+  const data = await $fetch("/api/blog/vectorize");
+  vectorStats.value = data;
 };
 
 // 检查文章是否已向量化
@@ -468,7 +473,10 @@ const regenerateVectors = async () => {
 
 // 删除文章
 const deletePost = async (post) => {
-  if (!confirm(`确定要删除${post.isDraft ? '草稿' : '文章'} "${post.title}" 吗？`)) return;
+  if (
+    !confirm(`确定要删除${post.isDraft ? "草稿" : "文章"} "${post.title}" 吗？`)
+  )
+    return;
 
   try {
     await $fetch("/api/blog/posts", {
@@ -495,13 +503,10 @@ const deletePost = async (post) => {
 
 // 从向量存储中移除文章
 const removeFromVectors = async (path) => {
-  try {
-    await $fetch("/api/blog/vectorize", {
-      method: "DELETE",
-      body: { path },
-    });
-  } catch (err) {
-  }
+  await $fetch("/api/blog/vectorize", {
+    method: "DELETE",
+    body: { path },
+  });
 };
 
 // 显示提示
@@ -531,7 +536,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Toast 动画 */
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.3s ease;

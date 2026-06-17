@@ -1,6 +1,5 @@
 <template>
   <div class="h-[calc(100vh-220px)] flex flex-col">
-    <!-- 精致头部 -->
     <header
       class="flex items-center justify-between pb-5 border-b border-stone-200/60"
     >
@@ -50,7 +49,7 @@
         </div>
       </div>
 
-      <!-- RAG 开关 - 改进样式 -->
+      <!-- RAG 开关 -->
       <div
         class="flex items-center gap-3 bg-stone-100/80 rounded-full px-4 py-2"
       >
@@ -216,7 +215,7 @@
                         />
                       </svg>
                       <span>{{ source.title }}</span>
-                      <span 
+                      <span
                         v-if="source.score"
                         class="px-1 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-medium"
                       >
@@ -264,7 +263,7 @@
         </div>
       </TransitionGroup>
 
-      <!-- 加载状态 - 改进样式 -->
+      <!-- 加载状态 -->
       <Transition name="fade">
         <div
           v-if="loading && !streaming"
@@ -296,7 +295,7 @@
       </Transition>
     </div>
 
-    <!-- 输入区域 - 改进样式 -->
+    <!-- 输入区域-->
     <div class="border-t border-stone-200/60 pt-5">
       <div class="relative group">
         <div
@@ -500,7 +499,9 @@ const sendMessage = async () => {
     }));
 
   try {
-    const apiEndpoint = useRAG.value ? "/api/chat/rag-chat" : "/api/chat/aichat-stream";
+    const apiEndpoint = useRAG.value
+      ? "/api/chat/rag-chat"
+      : "/api/chat/aichat-stream";
     const response = await fetch(apiEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -520,10 +521,7 @@ const sendMessage = async () => {
     if (useRAG.value) {
       const sourcesHeader = response.headers.get("X-Context-Sources");
       if (sourcesHeader) {
-        try {
-          sources = JSON.parse(decodeURIComponent(sourcesHeader));
-        } catch (e) {
-        }
+        sources = JSON.parse(decodeURIComponent(sourcesHeader));
       }
     }
 
@@ -570,7 +568,6 @@ useHead({ title: "对话 - Curata" });
 </script>
 
 <style scoped>
-/* 动画效果 */
 .delay-100 {
   animation-delay: 0.1s;
 }

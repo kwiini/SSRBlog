@@ -40,10 +40,18 @@ const DIM = 16; // 测试用小维度,跑得快
 
 function makeVec(seed: number, dim: number = DIM): number[] {
   // 用 seed 算出一个"伪随机"但确定性的向量
-  return Array.from({ length: dim }, (_, i) => Math.sin(seed * (i + 1)) * Math.cos(i * 0.1));
+  return Array.from(
+    { length: dim },
+    (_, i) => Math.sin(seed * (i + 1)) * Math.cos(i * 0.1),
+  );
 }
 
-function makeChunk(id: string, source: string, emb: number[], content = "x"): ChunkRecord {
+function makeChunk(
+  id: string,
+  source: string,
+  emb: number[],
+  content = "x",
+): ChunkRecord {
   return {
     id,
     content,
@@ -122,7 +130,7 @@ describe("vector-db: 基础 CRUD", () => {
     ]);
     const xs = getBySource("post-x");
     expect(xs).toHaveLength(3);
-    expect(xs.map(c => c.id)).toEqual(["a0", "a1", "a2"]);
+    expect(xs.map((c) => c.id)).toEqual(["a0", "a1", "a2"]);
   });
 
   it("deleteBySource 只删该 source 的", () => {
@@ -188,10 +196,13 @@ describe("vector-db: KNN 检索", () => {
   });
 
   it("按 source 过滤 → 只在该 source 内 KNN", () => {
-    const hits = searchByVector(makeVec(100), { topK: 10, source: "post-noise" });
+    const hits = searchByVector(makeVec(100), {
+      topK: 10,
+      source: "post-noise",
+    });
     // 只在 post-noise 里搜,该 source 内最相似的 noise-a 排第一
     expect(hits.length).toBeGreaterThan(0);
-    expect(hits.every(h => h.source === "post-noise")).toBe(true);
+    expect(hits.every((h) => h.source === "post-noise")).toBe(true);
   });
 
   it("空库 / 空 query → 空数组(空库情况是空数组)", () => {
@@ -274,7 +285,11 @@ describe("migrateFromJson: 一次性迁移", () => {
   it("空的 JSON(chunks: [])也走通(直接备份,迁移 0 条)", async () => {
     const jsonPath = join(tmpDir, "empty.json");
     const bakPath = jsonPath + ".bak";
-    writeFileSync(jsonPath, JSON.stringify({ version: "1.0", chunks: [] }), "utf-8");
+    writeFileSync(
+      jsonPath,
+      JSON.stringify({ version: "1.0", chunks: [] }),
+      "utf-8",
+    );
 
     const r = await migrateFromJson(jsonPath, bakPath);
     expect(r.migrated).toBe(0);

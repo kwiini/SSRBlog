@@ -126,13 +126,24 @@
         @click="currentPage--"
         :disabled="currentPage === 1"
         class="w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all duration-200"
-        :class="currentPage === 1
-          ? 'text-stone-300 cursor-not-allowed'
-          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        :class="
+          currentPage === 1
+            ? 'text-stone-300 cursor-not-allowed'
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
         "
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
 
@@ -142,9 +153,10 @@
         :key="page"
         @click="currentPage = page"
         class="min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-all duration-200"
-        :class="page === currentPage
-          ? 'bg-stone-800 text-white shadow-sm'
-          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        :class="
+          page === currentPage
+            ? 'bg-stone-800 text-white shadow-sm'
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
         "
       >
         {{ page }}
@@ -155,13 +167,24 @@
         @click="currentPage++"
         :disabled="currentPage === totalPages"
         class="w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all duration-200"
-        :class="currentPage === totalPages
-          ? 'text-stone-300 cursor-not-allowed'
-          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
+        :class="
+          currentPage === totalPages
+            ? 'text-stone-300 cursor-not-allowed'
+            : 'text-stone-600 hover:bg-stone-100 hover:text-stone-800'
         "
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
     </div>
@@ -268,11 +291,11 @@ const visiblePages = computed(() => {
   const maxVisible = 5;
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
   let end = Math.min(totalPages.value, start + maxVisible - 1);
-  
+
   if (end - start < maxVisible - 1) {
     start = Math.max(1, end - maxVisible + 1);
   }
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i);
   }
@@ -283,9 +306,12 @@ const visiblePages = computed(() => {
 watch(currentPage, (newPage, oldPage) => {
   if (newPage !== oldPage) {
     router.push({
-      query: { ...route.query, page: newPage > 1 ? newPage.toString() : undefined }
+      query: {
+        ...route.query,
+        page: newPage > 1 ? newPage.toString() : undefined,
+      },
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 });
 </script>

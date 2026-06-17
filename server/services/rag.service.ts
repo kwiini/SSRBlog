@@ -12,12 +12,12 @@
  * buildRAGPrompt / buildSimpleRAGPrompt 单独导出供流式接口复用。
  */
 
-import { hybridSearchUnique } from "../retrieval/hybrid"
-import { extractKeywords } from "../retrieval/bm25"
-import { enhanceQuery } from "../retrieval/query-expansion"
-import { compressContext } from "../processors/context-compressor"
-import { callLLM } from "../core/llm/client"
-import { RAGPrompts } from "../core/prompts"
+import { hybridSearchUnique } from "../retrieval/hybrid";
+import { extractKeywords } from "../retrieval/bm25";
+import { enhanceQuery } from "../retrieval/query-expansion";
+import { compressContext } from "../processors/context-compressor";
+import { callLLM } from "../core/llm/client";
+import { RAGPrompts } from "../core/prompts";
 
 import { logger } from "../lib/logger";
 
@@ -42,13 +42,13 @@ export async function retrieveContext(
 ): Promise<SearchResult[]> {
   const hybridResults = await hybridSearchUnique(query, topK);
 
-  return hybridResults.map(result => ({
+  return hybridResults.map((result) => ({
     content: result.content,
     source: result.source,
     metadata: result.metadata,
     similarity: result.similarity,
     bm25Score: result.bm25Score,
-    hybridScore: result.hybridScore
+    hybridScore: result.hybridScore,
   }));
 }
 
@@ -60,7 +60,14 @@ async function retrieveWithEnhancedQueries(
   question: string,
   options: RAGQueryOptions,
 ): Promise<SearchResult[]> {
-  const { topK = 3, useHyDE, useMultiQuery, useStepBack, useDecomposition, llmCaller } = options;
+  const {
+    topK = 3,
+    useHyDE,
+    useMultiQuery,
+    useStepBack,
+    useDecomposition,
+    llmCaller,
+  } = options;
 
   const enhanced = await enhanceQuery(question, {
     useExpansion: useMultiQuery,
@@ -77,12 +84,15 @@ async function retrieveWithEnhancedQueries(
 
   logger.info(
     `[RAG] enhanced strategies=${enhanced.strategies.join(",") || "none"} ` +
-    `isComplex=${enhanced.isComplex} queries=${allQueries.size}`,
+      `isComplex=${enhanced.isComplex} queries=${allQueries.size}`,
   );
 
-  const perQuery = Math.max(2, Math.ceil((topK * 2) / Math.max(1, allQueries.size)));
+  const perQuery = Math.max(
+    2,
+    Math.ceil((topK * 2) / Math.max(1, allQueries.size)),
+  );
   const allResultsLists = await Promise.all(
-    Array.from(allQueries).map(q => retrieveContext(q, perQuery)),
+    Array.from(allQueries).map((q) => retrieveContext(q, perQuery)),
   );
 
   // 按 content 前 120 字作为指纹去重
@@ -116,9 +126,9 @@ export function buildRAGPrompt(
   context: SearchResult[],
 ): string {
   if (context.length === 0) {
-    return RAGPrompts.noContext(question)
+    return RAGPrompts.noContext(question);
   }
-  return RAGPrompts.withContext(question, context)
+  return RAGPrompts.withContext(question, context);
 }
 
 /**
@@ -129,9 +139,9 @@ export function buildSimpleRAGPrompt(
   context: SearchResult[],
 ): string {
   if (context.length === 0) {
-    return question
+    return question;
   }
-  return RAGPrompts.simple(question, context)
+  return RAGPrompts.simple(question, context);
 }
 
 /**
@@ -167,12 +177,17 @@ export async function ragQuery(
     useCompression = true,
     maxContextLength = 600,
     useHyDE = true,
-    llmCaller
+    llmCaller,
   } = options;
 
   // 1. 检索上下文
   let context: SearchResult[];
-  if (useHyDE || useMultiQuery || options.useStepBack || options.useDecomposition) {
+  if (
+    useHyDE ||
+    useMultiQuery ||
+    options.useStepBack ||
+    options.useDecomposition
+  ) {
     const caller = llmCaller ?? callLLM;
     context = await retrieveWithEnhancedQueries(question, {
       ...options,
@@ -187,7 +202,7 @@ export async function ragQuery(
     context = compressContext(context, question, {
       maxLength: maxContextLength,
       removeDuplicates: true,
-      keepSentences: 8
+      keepSentences: 8,
     });
   }
 
@@ -211,7 +226,7 @@ export async function ragQuery(
  */
 export async function ragQuerySimple(
   question: string,
-  topK: number = 3
+  topK: number = 3,
 ): Promise<{
   question: string;
   context: SearchResult[];
@@ -223,6 +238,6 @@ export async function ragQuerySimple(
     question: result.question,
     context: result.context,
     prompt: result.prompt,
-    hasContext: result.hasContext
+    hasContext: result.hasContext,
   };
 }

@@ -10,7 +10,10 @@ export default defineEventHandler(async (event) => {
   const { username, password, role } = body || {};
 
   if (!username || !password || !role) {
-    throw createError({ statusCode: 400, message: "username、password、role 必填" });
+    throw createError({
+      statusCode: 400,
+      message: "username、password、role 必填",
+    });
   }
   if (!isValidRole(role)) {
     throw createError({ statusCode: 400, message: "非法角色" });

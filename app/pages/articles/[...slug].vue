@@ -29,7 +29,6 @@
     <article
       class="bg-white border border-stone-200/60 rounded-2xl overflow-hidden shadow-sm mb-8"
     >
-      <!-- 文章头部 - 改进设计 -->
       <div
         class="px-8 py-8 border-b border-stone-100 bg-linear-to-br from-stone-50/50 to-white"
       >
@@ -253,7 +252,7 @@
       </div>
     </Transition>
 
-    <!-- 复制成功提示 -->
+    <!-- 复制成功Tip -->
     <Transition name="toast">
       <div
         v-if="showToast"
@@ -307,7 +306,6 @@ const fetchRelatedPosts = async () => {
     });
     relatedPosts.value = data || [];
   } catch (err) {
-    // console.error("获取相关文章失败:", err);
     relatedPosts.value = [];
   }
 };
@@ -365,10 +363,10 @@ const backLink = computed(() => {
   const state = history.state;
   if (state?.back) {
     const backUrl = new URL(state.back, window.location.origin);
-    const page = backUrl.searchParams.get('page');
+    const page = backUrl.searchParams.get("page");
     if (page) return `/?page=${page}`;
   }
-  return '/';
+  return "/";
 });
 
 useHead(() => ({
@@ -383,7 +381,6 @@ useHead(() => ({
 </script>
 
 <style scoped>
-/* Toast 动画 */
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.3s ease;
@@ -415,7 +412,6 @@ useHead(() => ({
   transform: translateY(10px);
 }
 
-/* 文章内容样式增强 */
 :deep(.prose) {
   color: #44403c;
 }

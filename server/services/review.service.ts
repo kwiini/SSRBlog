@@ -10,9 +10,9 @@
  *              pass=原样,revise=可疑段落追加 [需核实],fail=整篇加警告
  */
 
-import { callLLM } from "../core/llm/client"
-import { extractKeySections } from "../processors/text-extractor"
-import { ReviewPrompts } from "../core/prompts"
+import { callLLM } from "../core/llm/client";
+import { extractKeySections } from "../processors/text-extractor";
+import { ReviewPrompts } from "../core/prompts";
 import { estimateTokens } from "../core/llm/tokens";
 
 import { logger } from "../lib/logger";
@@ -74,7 +74,7 @@ export function parseJsonResponse<T = any>(response: string): T | null {
  */
 export async function summarizeOnePaper(
   name: string,
-  content: string
+  content: string,
 ): Promise<PaperSummary> {
   const prepared = preparePaperContent(content);
 
@@ -97,7 +97,7 @@ function formatSummariesText(summaries: PaperSummary[]): string {
   return summaries
     .map(
       (s, i) =>
-        `【文献${i + 1}】${s.title}\n· 摘要：${s.summary}\n· 方法：${s.method}\n· 结论：${s.conclusion}`
+        `【文献${i + 1}】${s.title}\n· 摘要：${s.summary}\n· 方法：${s.method}\n· 结论：${s.conclusion}`,
     )
     .join("\n\n---\n\n");
 }
@@ -108,7 +108,7 @@ function formatSummariesText(summaries: PaperSummary[]): string {
  */
 async function reduceBatch(
   summaries: PaperSummary[],
-  batchLabel?: string
+  batchLabel?: string,
 ): Promise<any> {
   const papersText = formatSummariesText(summaries);
   const batchInfo = batchLabel ? `\n（本批为 ${batchLabel}）` : "";
@@ -128,7 +128,7 @@ async function reduceBatch(
  */
 async function mergeIntermediateReviews(
   intermediates: any[],
-  allSummaries: PaperSummary[]
+  allSummaries: PaperSummary[],
 ): Promise<any> {
   const partsText = intermediates
     .map((r, i) => {
@@ -180,8 +180,11 @@ function ensureCoreContents(review: any, summaries: PaperSummary[]): any {
  * 智能分批:根据 token 预算决定每批放几篇摘要
  */
 function computeBatchSize(summaries: PaperSummary[]): number {
-  const sampleText = formatSummariesText(summaries.slice(0, Math.min(3, summaries.length)));
-  const avgTokensPerPaper = estimateTokens(sampleText) / Math.min(3, summaries.length);
+  const sampleText = formatSummariesText(
+    summaries.slice(0, Math.min(3, summaries.length)),
+  );
+  const avgTokensPerPaper =
+    estimateTokens(sampleText) / Math.min(3, summaries.length);
   const availableTokens = CONTEXT_WINDOW_TOKENS - REDUCE_PROMPT_RESERVE_TOKENS;
 
   if (avgTokensPerPaper <= 0) return BATCH_SIZE;
@@ -192,16 +195,16 @@ function computeBatchSize(summaries: PaperSummary[]): number {
 /* ─── FactCheck 事实核查 ────────────────────────────── */
 
 interface FactCheckIssue {
-  field: string
-  severity: "unsupported" | "misattributed"
-  quote: string
-  reason: string
+  field: string;
+  severity: "unsupported" | "misattributed";
+  quote: string;
+  reason: string;
 }
 
 export interface FactCheckReport {
-  verdict: "pass" | "revise" | "fail"
-  score: number
-  issues: FactCheckIssue[]
+  verdict: "pass" | "revise" | "fail";
+  score: number;
+  issues: FactCheckIssue[];
 }
 
 /**
@@ -212,53 +215,63 @@ export async function factCheckReview(
   review: any,
   summaries: PaperSummary[],
 ): Promise<FactCheckReport | null> {
-  if (!review || summaries.length === 0) return null
+  if (!review || summaries.length === 0) return null;
 
-  const reviewJson = JSON.stringify(review, null, 2)
-  const papersText = formatSummariesText(summaries)
+  const reviewJson = JSON.stringify(review, null, 2);
+  const papersText = formatSummariesText(summaries);
 
-  const prompt = ReviewPrompts.factCheck(summaries.length, reviewJson, papersText)
-  const response = await callLLM(prompt)
-  const parsed = parseJsonResponse<FactCheckReport>(response)
-  if (!parsed || !parsed.verdict) return null
+  const prompt = ReviewPrompts.factCheck(
+    summaries.length,
+    reviewJson,
+    papersText,
+  );
+  const response = await callLLM(prompt);
+  const parsed = parseJsonResponse<FactCheckReport>(response);
+  if (!parsed || !parsed.verdict) return null;
   return {
     verdict: parsed.verdict,
     score: typeof parsed.score === "number" ? parsed.score : 0,
     issues: Array.isArray(parsed.issues) ? parsed.issues : [],
-  }
+  };
 }
 
 function annotateReviewWithFactCheck(
   review: any,
   report: FactCheckReport,
 ): any {
-  const annotated = { ...review }
-  const issuesByField: Record<string, FactCheckIssue[]> = {}
+  const annotated = { ...review };
+  const issuesByField: Record<string, FactCheckIssue[]> = {};
   for (const issue of report.issues) {
     if (!issuesByField[issue.field]) issuesByField[issue.field] = [];
-    (issuesByField[issue.field] ??= []).push(issue)
+    (issuesByField[issue.field] ??= []).push(issue);
   }
 
   for (const field of ["background", "innovation", "trend"] as const) {
-    const issues = issuesByField[field]
+    const issues = issuesByField[field];
     if (issues && issues.length > 0 && typeof annotated[field] === "string") {
       annotated[field] =
         annotated[field] +
-        `\n\n[需核实] 本段含 ${issues.length} 条未在原始文献中找到依据的声明`
+        `\n\n[需核实] 本段含 ${issues.length} 条未在原始文献中找到依据的声明`;
     }
   }
 
   if (Array.isArray(annotated.coreContents)) {
-    annotated.coreContents = annotated.coreContents.map((item: any, i: number) => {
-      const next = { ...item }
-      for (const subField of ["summary", "method", "conclusion"] as const) {
-        const key = `coreContents[${i}].${subField}`
-        if (issuesByField[key] && issuesByField[key]!.length > 0 && typeof next[subField] === "string") {
-          next[subField] = next[subField] + " [需核实]"
+    annotated.coreContents = annotated.coreContents.map(
+      (item: any, i: number) => {
+        const next = { ...item };
+        for (const subField of ["summary", "method", "conclusion"] as const) {
+          const key = `coreContents[${i}].${subField}`;
+          if (
+            issuesByField[key] &&
+            issuesByField[key]!.length > 0 &&
+            typeof next[subField] === "string"
+          ) {
+            next[subField] = next[subField] + " [需核实]";
+          }
         }
-      }
-      return next
-    })
+        return next;
+      },
+    );
   }
 
   annotated.factCheck = {
@@ -266,9 +279,9 @@ function annotateReviewWithFactCheck(
     score: report.score,
     issueCount: report.issues.length,
     fail: report.verdict === "fail",
-  }
+  };
 
-  return annotated
+  return annotated;
 }
 
 /**
@@ -278,78 +291,81 @@ function annotateReviewWithFactCheck(
 
 export interface CitationRef {
   /** [N] 中的 N,从 1 开始 */
-  index: number
+  index: number;
   /** 该引用出现的字段 */
-  field: string
+  field: string;
   /** 该引用所在的句子(去掉 [N] 标记) */
-  sentence: string
+  sentence: string;
   /** 引用的论文是否合法(1..N 范围内) */
-  valid: boolean
+  valid: boolean;
 }
 
 export interface CitationExtract {
   /** 所有引用,按出现顺序 */
-  refs: CitationRef[]
+  refs: CitationRef[];
   /** 引用统计 */
   stats: {
     /** 引用总次数(同一处出现 [1][2] 算 2) */
-    total: number
+    total: number;
     /** 唯一引用到的论文编号 */
-    unique: number
+    unique: number;
     /** 引用了不存在的编号的次数(疑似 LLM 幻觉) */
-    invalidCount: number
-  }
+    invalidCount: number;
+  };
   /** 每篇论文被引用次数(1-indexed) */
-  perPaper: number[]
+  perPaper: number[];
 }
 
-const CITATION_RE = /\[(\d+)\]/g
+const CITATION_RE = /\[(\d+)\]/g;
 
 /**
  * 从综述文本里提取 [N] 引用,验证有效性
  * - 扫描 background / innovation / trend
  * - coreContents[i] 天然归属第 i+1 篇,不算 inline 引用
  */
-export function extractCitations(review: any, paperCount: number): CitationExtract {
-  const refs: CitationRef[] = []
-  const perPaper = new Array(Math.max(paperCount, 0)).fill(0)
+export function extractCitations(
+  review: any,
+  paperCount: number,
+): CitationExtract {
+  const refs: CitationRef[] = [];
+  const perPaper = new Array(Math.max(paperCount, 0)).fill(0);
 
-  const fields = ["background", "innovation", "trend"] as const
+  const fields = ["background", "innovation", "trend"] as const;
   for (const field of fields) {
-    const text = review?.[field]
-    if (typeof text !== "string" || !text) continue
+    const text = review?.[field];
+    if (typeof text !== "string" || !text) continue;
 
     // 按句号 / 问号 / 感叹号 / 换行 拆句
-    const sentences = text.split(/(?<=[。！？!?\n])/)
+    const sentences = text.split(/(?<=[。！？!?\n])/);
     for (const raw of sentences) {
-      const sentence = raw.trim()
-      if (!sentence) continue
+      const sentence = raw.trim();
+      if (!sentence) continue;
       // 找出本句里所有 [N]
-      const matches = [...sentence.matchAll(CITATION_RE)]
+      const matches = [...sentence.matchAll(CITATION_RE)];
       for (const m of matches) {
-        const n = parseInt(m[1]!, 10)
-        const valid = n >= 1 && n <= paperCount
+        const n = parseInt(m[1]!, 10);
+        const valid = n >= 1 && n <= paperCount;
         refs.push({
           index: n,
           field,
           sentence: sentence.replace(CITATION_RE, "").trim(),
           valid,
-        })
+        });
         if (valid) {
-          perPaper[n - 1] = (perPaper[n - 1] || 0) + 1
+          perPaper[n - 1] = (perPaper[n - 1] || 0) + 1;
         }
       }
     }
   }
 
-  const unique = new Set(refs.filter(r => r.valid).map(r => r.index)).size
-  const invalidCount = refs.filter(r => !r.valid).length
+  const unique = new Set(refs.filter((r) => r.valid).map((r) => r.index)).size;
+  const invalidCount = refs.filter((r) => !r.valid).length;
 
   return {
     refs,
     stats: { total: refs.length, unique, invalidCount },
     perPaper,
-  }
+  };
 }
 
 /**
@@ -361,20 +377,22 @@ export function extractCitations(review: any, paperCount: number): CitationExtra
  * 返回 { review, factCheck, citations } 三件套,调用方一次拿到全部产物
  */
 export interface ReviewResult {
-  review: any
+  review: any;
   /** 事实核查报告(可能为 null: LLM 失败时降级) */
-  factCheck: FactCheckReport | null
+  factCheck: FactCheckReport | null;
   /** 从综述中提取的 [N] 引用及解析结果 */
-  citations: CitationExtract
+  citations: CitationExtract;
 }
 
-export async function aggregateReview(summaries: PaperSummary[]): Promise<ReviewResult> {
+export async function aggregateReview(
+  summaries: PaperSummary[],
+): Promise<ReviewResult> {
   if (summaries.length === 0) {
     throw new Error("没有可聚合的文献摘要");
   }
 
   const batchSize = computeBatchSize(summaries);
-  let raw: any
+  let raw: any;
   if (summaries.length <= batchSize) {
     raw = ensureCoreContents(await reduceBatch(summaries), summaries);
   } else {
@@ -387,7 +405,9 @@ export async function aggregateReview(summaries: PaperSummary[]): Promise<Review
     for (let i = 0; i < batches.length; i++) {
       const batchResult = await reduceBatch(
         batches[i]!,
-        batches.length > 1 ? `第${i + 1}批（共${batches.length}批）` : undefined
+        batches.length > 1
+          ? `第${i + 1}批（共${batches.length}批）`
+          : undefined,
       );
       intermediates.push(batchResult);
     }
@@ -400,15 +420,15 @@ export async function aggregateReview(summaries: PaperSummary[]): Promise<Review
   }
 
   // Citation 解析(无 LLM 调用,纯文本解析,始终成功)
-  const citations = extractCitations(raw, summaries.length)
+  const citations = extractCitations(raw, summaries.length);
 
   // FactCheck(可能为 null: LLM 失败时降级返回原始 raw)
-  const factCheck = await runFactCheckSafe(raw, summaries)
+  const factCheck = await runFactCheckSafe(raw, summaries);
 
   // 在 review 上标注 [需核实],把完整 factCheck 报告单独返回给调用方
-  const review = factCheck ? annotateReviewWithFactCheck(raw, factCheck) : raw
+  const review = factCheck ? annotateReviewWithFactCheck(raw, factCheck) : raw;
 
-  return { review, factCheck, citations }
+  return { review, factCheck, citations };
 }
 
 /**
@@ -420,10 +440,10 @@ export async function runFactCheckSafe(
   summaries: PaperSummary[],
 ): Promise<FactCheckReport | null> {
   try {
-    const report = await factCheckReview(review, summaries)
-    return report
+    const report = await factCheckReview(review, summaries);
+    return report;
   } catch (err) {
-    logger.error("[review-generator] fact-check failed (non-fatal):", err)
-    return null
+    logger.error("[review-generator] fact-check failed (non-fatal):", err);
+    return null;
   }
 }

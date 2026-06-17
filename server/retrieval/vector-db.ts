@@ -59,7 +59,10 @@ export function closeVectorDb(): void {
 }
 
 /** 拿单例 db;首次调用时建表、加载扩展、开启 WAL */
-export function getVectorDb(opts?: { path?: string; dim?: number }): Database.Database {
+export function getVectorDb(opts?: {
+  path?: string;
+  dim?: number;
+}): Database.Database {
   if (_db) return _db;
 
   const path = opts?.path ?? DEFAULT_DB_PATH;
@@ -125,11 +128,13 @@ export function upsertChunks(chunks: ChunkRecord[]): void {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const ids = chunks.map(c => c.id);
+  const ids = chunks.map((c) => c.id);
   const tx = db.transaction((batch: ChunkRecord[]) => {
     // 1) 先把同 id 的旧行清掉
     const placeholders = ids.map(() => "?").join(",");
-    db.prepare(`DELETE FROM vec_chunks WHERE id IN (${placeholders})`).run(...ids);
+    db.prepare(`DELETE FROM vec_chunks WHERE id IN (${placeholders})`).run(
+      ...ids,
+    );
 
     // 2) 再插新行
     for (const c of batch) {
@@ -223,7 +228,8 @@ export function clearAllChunksCache(): void {
 /** 总数 */
 export function countChunks(): number {
   const db = getVectorDb();
-  return (db.prepare(`SELECT COUNT(*) AS n FROM vec_chunks`).get() as any).n as number;
+  return (db.prepare(`SELECT COUNT(*) AS n FROM vec_chunks`).get() as any)
+    .n as number;
 }
 
 /** 清空全部(给 DELETE /api/blog/vectorize 用) */
@@ -257,9 +263,7 @@ export function searchByVector(
     .all(...params, opts.topK) as any[];
 
   const threshold = opts.threshold ?? 0;
-  return rows
-    .map(rowToHit)
-    .filter(h => h.similarity >= threshold);
+  return rows.map(rowToHit).filter((h) => h.similarity >= threshold);
 }
 
 // · 内部工具

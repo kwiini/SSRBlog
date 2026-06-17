@@ -19,9 +19,7 @@ interface RelatedPost {
 }
 
 /** 把某文章的 chunk 列表的 embedding 求平均,作为该文章的"指纹" */
-function calculateArticleAverageEmbedding(
-  embeddings: number[][],
-): number[] {
+function calculateArticleAverageEmbedding(embeddings: number[][]): number[] {
   if (embeddings.length === 0) return [];
   const dim = embeddings[0]?.length ?? 0;
   const sum = new Array(dim).fill(0);
@@ -30,7 +28,7 @@ function calculateArticleAverageEmbedding(
       sum[i] += emb[i] ?? 0;
     }
   }
-  return sum.map(v => v / embeddings.length);
+  return sum.map((v) => v / embeddings.length);
 }
 
 async function getRelatedPosts(
@@ -40,15 +38,18 @@ async function getRelatedPosts(
   const allChunks = getAllChunks();
   if (allChunks.length === 0) return [];
 
-  const currentChunks = allChunks.filter(c => c.source === currentPath);
+  const currentChunks = allChunks.filter((c) => c.source === currentPath);
   if (currentChunks.length === 0) return [];
 
   const currentArticleEmbedding = calculateArticleAverageEmbedding(
-    currentChunks.map(c => c.embedding),
+    currentChunks.map((c) => c.embedding),
   );
 
   // 按 source 聚合
-  const articleGroups = new Map<string, { title: string; path: string; embs: number[][]; contents: string[] }>();
+  const articleGroups = new Map<
+    string,
+    { title: string; path: string; embs: number[][]; contents: string[] }
+  >();
   for (const chunk of allChunks) {
     if (chunk.source === currentPath) continue;
     const g = articleGroups.get(chunk.source);
@@ -68,11 +69,16 @@ async function getRelatedPosts(
   const results: RelatedPost[] = [];
   for (const article of articleGroups.values()) {
     const articleEmbedding = calculateArticleAverageEmbedding(article.embs);
-    const similarity = cosineSimilarity(currentArticleEmbedding, articleEmbedding);
+    const similarity = cosineSimilarity(
+      currentArticleEmbedding,
+      articleEmbedding,
+    );
 
     const fullContent = article.contents.join("\n");
     const cleanText = extractTextFromMarkdown(fullContent);
-    const firstParagraph = cleanText.split("\n").find(p => p.trim().length > 20);
+    const firstParagraph = cleanText
+      .split("\n")
+      .find((p) => p.trim().length > 20);
     const description = firstParagraph
       ? firstParagraph.trim().slice(0, 120) + "..."
       : cleanText.slice(0, 120) + "...";
@@ -88,7 +94,7 @@ async function getRelatedPosts(
   return results
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, topK)
-    .filter(r => r.similarity > 0.5);
+    .filter((r) => r.similarity > 0.5);
 }
 
 export default defineEventHandler(async (event) => {
@@ -104,6 +110,9 @@ export default defineEventHandler(async (event) => {
     const relatedPosts = await getRelatedPosts(currentPath, topK);
     return { success: true, data: relatedPosts };
   } catch (error: any) {
-    throw createError({ statusCode: 500, message: error.message || "获取相关文章失败" });
+    throw createError({
+      statusCode: 500,
+      message: error.message || "获取相关文章失败",
+    });
   }
 });

@@ -380,21 +380,17 @@ tags: [${
 
 // 加载文章数据
 const loadPost = async (path, fromDraft = false) => {
-  if (!path || path === 'undefined') return;
+  if (!path || path === "undefined") return;
   try {
     const data = await queryCollection("content").path(path).first();
     if (data) {
       // 读取原始 markdown 文件
       const slug = path.replace("/articles/", "").replace(/^\//, "");
       let rawContent = "";
-      try {
-        const fileData = await $fetch(
-          `/api/posts/get?path=${encodeURIComponent(path)}${fromDraft ? '&fromDraft=1' : ''}`
-        );
-        rawContent = fileData?.data?.content || "";
-      } catch {
-        // 加载失败
-      }
+      const fileData = await $fetch(
+        `/api/posts/get?path=${encodeURIComponent(path)}${fromDraft ? "&fromDraft=1" : ""}`,
+      );
+      rawContent = fileData?.data?.content || "";
 
       post.value = {
         title: data.title || "",
@@ -412,7 +408,7 @@ const loadPost = async (path, fromDraft = false) => {
       const slug = path.replace("/articles/", "").replace(/^\//, "");
       try {
         const fileData = await $fetch(
-          `/api/posts/get?path=${encodeURIComponent(path)}&fromDraft=1`
+          `/api/posts/get?path=${encodeURIComponent(path)}&fromDraft=1`,
         );
         const meta = fileData?.data?.meta || {};
         post.value = {
@@ -421,7 +417,9 @@ const loadPost = async (path, fromDraft = false) => {
           content: fileData?.data?.content || "",
           description: meta.description || "",
           date: meta.date || new Date().toISOString().split("T")[0],
-          tags: Array.isArray(meta.tags) ? meta.tags.join(", ") : meta.tags || "",
+          tags: Array.isArray(meta.tags)
+            ? meta.tags.join(", ")
+            : meta.tags || "",
         };
         isEditing.value = true;
       } catch (err) {
@@ -434,9 +432,11 @@ const loadPost = async (path, fromDraft = false) => {
 };
 
 // 页面加载
-const editPath = typeof route.query.edit === 'string' ? route.query.edit : undefined;
-const fromDraft = route.query.fromDraft === '1' || route.query.fromDraft === 'true';
-if (editPath && editPath !== 'undefined') {
+const editPath =
+  typeof route.query.edit === "string" ? route.query.edit : undefined;
+const fromDraft =
+  route.query.fromDraft === "1" || route.query.fromDraft === "true";
+if (editPath && editPath !== "undefined") {
   await loadPost(editPath, fromDraft);
 }
 
@@ -466,13 +466,10 @@ const publishPost = async () => {
 
     // 触发增量向量化 - 只处理当前文章
     vectorizing.value = true;
-    try {
-      await $fetch("/api/blog/vectorize", {
+    await $fetch("/api/blog/vectorize", {
       method: "POST",
       body: { path: postPath, force: false },
     });
-    } catch (vecErr) {
-    }
 
     showToast(isEditing.value ? "文章更新成功" : "文章发布成功", "success");
 
@@ -543,11 +540,9 @@ const showToast = (message, type = "success") => {
     toast.value.show = false;
   }, 3000);
 };
-
 </script>
 
 <style scoped>
-/* Toast 动画 */
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.3s ease;

@@ -13,27 +13,27 @@ import { EnhancePrompts, HyDEPrompts, QueryPrompts } from "../core/prompts";
 import { logger } from "../lib/logger";
 
 const SYNONYM_DICT: Record<string, string[]> = {
-  'js': ['javascript', 'java script'],
-  'javascript': ['js', 'java script'],
-  'ts': ['typescript', 'type script'],
-  'typescript': ['ts', 'type script'],
-  'py': ['python'],
-  'python': ['py'],
-  '前端': ['frontend', 'front-end', '客户端'],
-  '后端': ['backend', 'back-end', '服务端', '服务器端'],
-  '数据库': ['database', 'db', 'data store'],
-  'api': ['接口', '应用程序接口'],
-  '性能': ['优化', '速度', '效率', 'performance'],
-  '安全': ['security', '防护', '漏洞', '攻击'],
-  '部署': ['发布', '上线', 'delivery', 'deployment'],
-  '测试': ['test', 'testing', '单元测试', '集成测试'],
-  '框架': ['framework', '库', 'library'],
-  '组件': ['component', '模块', 'module'],
-  '路由': ['router', 'routing', '页面跳转'],
-  '状态管理': ['state management', 'redux', 'vuex', 'pinia', 'store'],
-  '缓存': ['cache', 'caching', '本地存储', 'localstorage'],
-  '异步': ['async', 'promise', 'callback', '非阻塞'],
-  '响应式': ['reactive', '响应', '双向绑定'],
+  js: ["javascript", "java script"],
+  javascript: ["js", "java script"],
+  ts: ["typescript", "type script"],
+  typescript: ["ts", "type script"],
+  py: ["python"],
+  python: ["py"],
+  前端: ["frontend", "front-end", "客户端"],
+  后端: ["backend", "back-end", "服务端", "服务器端"],
+  数据库: ["database", "db", "data store"],
+  api: ["接口", "应用程序接口"],
+  性能: ["优化", "速度", "效率", "performance"],
+  安全: ["security", "防护", "漏洞", "攻击"],
+  部署: ["发布", "上线", "delivery", "deployment"],
+  测试: ["test", "testing", "单元测试", "集成测试"],
+  框架: ["framework", "库", "library"],
+  组件: ["component", "模块", "module"],
+  路由: ["router", "routing", "页面跳转"],
+  状态管理: ["state management", "redux", "vuex", "pinia", "store"],
+  缓存: ["cache", "caching", "本地存储", "localstorage"],
+  异步: ["async", "promise", "callback", "非阻塞"],
+  响应式: ["reactive", "响应", "双向绑定"],
 };
 
 function getSynonyms(word: string): string[] {
@@ -62,7 +62,7 @@ export function expandQuery(query: string): ExpandedQuery {
       synonyms.set(keyword, syns);
 
       for (const syn of syns.slice(0, 2)) {
-        const variation = query.replace(new RegExp(keyword, 'gi'), syn);
+        const variation = query.replace(new RegExp(keyword, "gi"), syn);
         if (variation !== query && !variations.includes(variation)) {
           variations.push(variation);
         }
@@ -71,14 +71,14 @@ export function expandQuery(query: string): ExpandedQuery {
   }
 
   if (keywords.length >= 2) {
-    variations.push(keywords.join(' '));
+    variations.push(keywords.join(" "));
   }
 
   return {
     original: query,
     variations: variations.slice(0, 5),
     keywords,
-    synonyms
+    synonyms,
   };
 }
 
@@ -87,7 +87,7 @@ export function expandQuery(query: string): ExpandedQuery {
  */
 export async function generateHypotheticalAnswer(
   query: string,
-  llmCaller: (prompt: string) => Promise<string>
+  llmCaller: (prompt: string) => Promise<string>,
 ): Promise<string> {
   const prompt = HyDEPrompts.hypotheticalDoc(query);
 
@@ -95,7 +95,7 @@ export async function generateHypotheticalAnswer(
     const answer = await llmCaller(prompt);
     return answer.trim();
   } catch (error) {
-    logger.error('生成假设答案失败:', error);
+    logger.error("生成假设答案失败:", error);
     return query;
   }
 }
@@ -122,24 +122,24 @@ export function generateMultiQueries(query: string): string[] {
 }
 
 function rewriteQueryBasic(query: string): string {
-  let rewritten = query.trim()
-  rewritten = rewritten.replace(/\s+/g, " ")
+  let rewritten = query.trim();
+  rewritten = rewritten.replace(/\s+/g, " ");
 
   if (rewritten.length < 5 && !rewritten.includes(" ")) {
-    const syns = getSynonyms(rewritten)
+    const syns = getSynonyms(rewritten);
     if (syns.length > 0) {
-      rewritten = `${rewritten} ${syns[0] ?? ""}`.trim()
+      rewritten = `${rewritten} ${syns[0] ?? ""}`.trim();
     }
   }
 
-  return rewritten
+  return rewritten;
 }
 
 function shouldUseLLMRewrite(query: string): boolean {
-  if (!query) return false
-  if (query.length > 200) return false
-  if (query.trim().length < 2) return false
-  return true
+  if (!query) return false;
+  if (query.length > 200) return false;
+  if (query.trim().length < 2) return false;
+  return true;
 }
 
 /**
@@ -149,25 +149,26 @@ export async function rewriteQuery(
   query: string,
   llmCaller?: (prompt: string) => Promise<string>,
 ): Promise<string> {
-  const basic = rewriteQueryBasic(query)
+  const basic = rewriteQueryBasic(query);
 
   if (!llmCaller || !shouldUseLLMRewrite(basic)) {
-    return basic
+    return basic;
   }
 
   try {
-    const prompt = QueryPrompts.rewrite(basic)
-    const raw = await llmCaller(prompt)
-    const rewritten = raw
-      .replace(/^改写后[：:]\s*/g, "")
-      .replace(/^["'「」`]+|["'「」`]+$/g, "")
-      .trim()
-      .split(/\r?\n/)[0]
-      ?.slice(0, 80) ?? ""
-    return rewritten || basic
+    const prompt = QueryPrompts.rewrite(basic);
+    const raw = await llmCaller(prompt);
+    const rewritten =
+      raw
+        .replace(/^改写后[：:]\s*/g, "")
+        .replace(/^["'「」`]+|["'「」`]+$/g, "")
+        .trim()
+        .split(/\r?\n/)[0]
+        ?.slice(0, 80) ?? "";
+    return rewritten || basic;
   } catch (error) {
-    logger.error("[query-rewrite] LLM 改写失败，回退到 basic:", error)
-    return basic
+    logger.error("[query-rewrite] LLM 改写失败，回退到 basic:", error);
+    return basic;
   }
 }
 
@@ -177,25 +178,25 @@ export async function rewriteQuery(
  * 复杂查询判定
  */
 export function isComplexQuery(query: string): boolean {
-  if (!query) return false
-  const q = query.trim()
+  if (!query) return false;
+  const q = query.trim();
 
   if (/(区别|差异|对比|比较|不同|相同|优劣|好处|坏处|vs\.?|versus)/i.test(q)) {
-    return true
+    return true;
   }
 
   if (/(在.{2,15}中|在.{2,15}下|在.{2,15}时|基于|通过.{2,15}实现)/.test(q)) {
-    return true
+    return true;
   }
 
-  if (/[、，]/.test(q)) return true
-  if (/(?:和|与|及)\s*[\u4e00-\u9fa5A-Za-z]{2,}/.test(q)) return true
+  if (/[、，]/.test(q)) return true;
+  if (/(?:和|与|及)\s*[\u4e00-\u9fa5A-Za-z]{2,}/.test(q)) return true;
 
-  if (q.length >= 30) return true
+  if (q.length >= 30) return true;
 
-  if ((q.match(/[？?]/g) || []).length >= 2) return true
+  if ((q.match(/[？?]/g) || []).length >= 2) return true;
 
-  return false
+  return false;
 }
 
 /**
@@ -206,17 +207,18 @@ export async function stepBackQuery(
   llmCaller: (prompt: string) => Promise<string>,
 ): Promise<string | null> {
   try {
-    const raw = await llmCaller(EnhancePrompts.stepBack(query))
-    const cleaned = raw
-      .replace(/^上位问题[：:]\s*/g, "")
-      .replace(/^["'「」`]+|["'「」`]+$/g, "")
-      .trim()
-      .split(/\r?\n/)[0]
-      ?.slice(0, 100) ?? ""
-    return cleaned || null
+    const raw = await llmCaller(EnhancePrompts.stepBack(query));
+    const cleaned =
+      raw
+        .replace(/^上位问题[：:]\s*/g, "")
+        .replace(/^["'「」`]+|["'「」`]+$/g, "")
+        .trim()
+        .split(/\r?\n/)[0]
+        ?.slice(0, 100) ?? "";
+    return cleaned || null;
   } catch (err) {
-    logger.error("[stepBackQuery] LLM 调用失败:", err)
-    return null
+    logger.error("[stepBackQuery] LLM 调用失败:", err);
+    return null;
   }
 }
 
@@ -228,43 +230,44 @@ export async function decomposeQuery(
   llmCaller: (prompt: string) => Promise<string>,
 ): Promise<string[]> {
   try {
-    const raw = await llmCaller(EnhancePrompts.decompose(query))
+    const raw = await llmCaller(EnhancePrompts.decompose(query));
 
-    let parsed: { shouldDecompose?: boolean; subQuestions?: string[] } | null = null
+    let parsed: { shouldDecompose?: boolean; subQuestions?: string[] } | null =
+      null;
     try {
       const cleaned = raw
         .replace(/```json\s*/gi, "")
         .replace(/```\s*/g, "")
-        .trim()
-      const start = cleaned.indexOf("{")
-      const end = cleaned.lastIndexOf("}")
+        .trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
       if (start >= 0 && end > start) {
-        parsed = JSON.parse(cleaned.slice(start, end + 1))
+        parsed = JSON.parse(cleaned.slice(start, end + 1));
       }
     } catch {
-      parsed = null
+      parsed = null;
     }
 
     if (parsed && Array.isArray(parsed.subQuestions)) {
       const subs = parsed.subQuestions
-        .map(s => String(s).trim())
-        .filter(s => s.length > 0 && s.length <= 100)
-        .slice(0, 4)
+        .map((s) => String(s).trim())
+        .filter((s) => s.length > 0 && s.length <= 100)
+        .slice(0, 4);
       if (parsed.shouldDecompose === false) {
-        return subs.length > 0 ? subs : [query]
+        return subs.length > 0 ? subs : [query];
       }
-      return subs
+      return subs;
     }
 
     const lines = raw
       .split(/\r?\n/)
-      .map(l => l.replace(/^[\d\-\.\)、]\s*/, "").trim())
-      .filter(l => l.length > 4 && l.length <= 100)
-      .slice(0, 4)
-    return lines.length > 0 ? lines : []
+      .map((l) => l.replace(/^[\d\-\.\)、]\s*/, "").trim())
+      .filter((l) => l.length > 4 && l.length <= 100)
+      .slice(0, 4);
+    return lines.length > 0 ? lines : [];
   } catch (err) {
-    logger.error("[decomposeQuery] LLM 调用失败:", err)
-    return []
+    logger.error("[decomposeQuery] LLM 调用失败:", err);
+    return [];
   }
 }
 
@@ -282,94 +285,96 @@ export async function enhanceQuery(
     disableAutoStepBack?: boolean;
     disableAutoDecomposition?: boolean;
     llmCaller?: (prompt: string) => Promise<string>;
-  }
+  },
 ): Promise<{
-  queries: string[]
-  hypotheticalDoc?: string
-  isComplex: boolean
-  strategies: string[]
+  queries: string[];
+  hypotheticalDoc?: string;
+  isComplex: boolean;
+  strategies: string[];
 }> {
   const result: {
-    queries: string[]
-    hypotheticalDoc?: string
-    isComplex: boolean
-    strategies: string[]
+    queries: string[];
+    hypotheticalDoc?: string;
+    isComplex: boolean;
+    strategies: string[];
   } = {
     queries: [query],
     isComplex: false,
     strategies: [],
-  }
+  };
 
   // 1. 查询改写
-  const rewritten = await rewriteQuery(query, options?.llmCaller)
+  const rewritten = await rewriteQuery(query, options?.llmCaller);
   if (rewritten !== query) {
-    result.queries.push(rewritten)
-    result.strategies.push("rewrite")
+    result.queries.push(rewritten);
+    result.strategies.push("rewrite");
   }
 
   // 2. 查询扩展
   if (options?.useExpansion !== false) {
-    const expanded = expandQuery(query)
+    const expanded = expandQuery(query);
     for (const variation of expanded.variations) {
       if (!result.queries.includes(variation)) {
-        result.queries.push(variation)
+        result.queries.push(variation);
       }
     }
     if (expanded.variations.length > 1) {
-      result.strategies.push("expansion")
+      result.strategies.push("expansion");
     }
   }
 
   // 3-4. Step-back + Decomposition
-  const isComplex = isComplexQuery(query)
-  result.isComplex = isComplex
+  const isComplex = isComplexQuery(query);
+  result.isComplex = isComplex;
 
   const useStepBack =
-    options?.useStepBack ??
-    (isComplex && !options?.disableAutoStepBack)
+    options?.useStepBack ?? (isComplex && !options?.disableAutoStepBack);
   const useDecompose =
     options?.useDecomposition ??
-    (isComplex && !options?.disableAutoDecomposition)
+    (isComplex && !options?.disableAutoDecomposition);
 
   if (useStepBack && options?.llmCaller) {
     try {
-      const stepBack = await stepBackQuery(query, options.llmCaller)
+      const stepBack = await stepBackQuery(query, options.llmCaller);
       if (stepBack && !result.queries.includes(stepBack)) {
-        result.queries.unshift(stepBack)
-        result.strategies.push("stepBack")
+        result.queries.unshift(stepBack);
+        result.strategies.push("stepBack");
       }
     } catch (err) {
-      logger.error("[enhanceQuery] step-back 失败（已跳过）:", err)
+      logger.error("[enhanceQuery] step-back 失败（已跳过）:", err);
     }
   }
 
   if (useDecompose && options?.llmCaller) {
     try {
-      const subs = await decomposeQuery(query, options.llmCaller)
+      const subs = await decomposeQuery(query, options.llmCaller);
       for (const s of subs) {
         if (s && !result.queries.includes(s)) {
-          result.queries.push(s)
+          result.queries.push(s);
         }
       }
       if (subs.length > 0) {
-        result.strategies.push("decompose")
+        result.strategies.push("decompose");
       }
     } catch (err) {
-      logger.error("[enhanceQuery] decompose 失败（已跳过）:", err)
+      logger.error("[enhanceQuery] decompose 失败（已跳过）:", err);
     }
   }
 
   // 5. HyDE
   if (options?.useHyDE && options?.llmCaller) {
     try {
-      result.hypotheticalDoc = await generateHypotheticalAnswer(query, options.llmCaller)
-      result.strategies.push("hyde")
+      result.hypotheticalDoc = await generateHypotheticalAnswer(
+        query,
+        options.llmCaller,
+      );
+      result.strategies.push("hyde");
     } catch (error) {
-      logger.error("HyDE 生成失败:", error)
+      logger.error("HyDE 生成失败:", error);
     }
   }
 
-  result.queries = result.queries.slice(0, 10)
+  result.queries = result.queries.slice(0, 10);
 
-  return result
+  return result;
 }

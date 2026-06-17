@@ -10,7 +10,11 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { bm25Search, extractKeywords, tokenize } from "../server/retrieval/bm25";
+import {
+  bm25Search,
+  extractKeywords,
+  tokenize,
+} from "../server/retrieval/bm25";
 
 function doc(id: string, content: string, title: string, path = "/" + id) {
   return {
@@ -32,7 +36,7 @@ describe("tokenize", () => {
     expect(toks).toContain("learning");
     expect(toks).toContain("deep");
     // learning 应出现 2 次(大小写归一)
-    expect(toks.filter(t => t === "learning").length).toBe(2);
+    expect(toks.filter((t) => t === "learning").length).toBe(2);
   });
 
   it("中文切出非单字词(实际环境为 2-char,稳定就好)", () => {
@@ -54,13 +58,17 @@ describe("bm25Search", () => {
 
   it("相关文档排在无关文档之前,score 单调降序", () => {
     const docs = [
-      doc("a", "machine learning is a branch of AI, machine learning matters", "AI intro"),
+      doc(
+        "a",
+        "machine learning is a branch of AI, machine learning matters",
+        "AI intro",
+      ),
       doc("b", "today weather is nice, good for outing", "diary"),
       doc("c", "I like machine learning and deep learning", "notes"),
     ];
     const out = bm25Search("machine learning", docs, 10);
     expect(out.length).toBe(2);
-    const ids = out.map(r => r.id);
+    const ids = out.map((r) => r.id);
     expect(ids).toContain("a");
     expect(ids).toContain("c");
     expect(ids).not.toContain("b");
@@ -116,7 +124,10 @@ describe("extractKeywords", () => {
   });
 
   it("过滤单字停用词", () => {
-    const kw = extractKeywords("I am learning some new things, this is fun.", 5);
+    const kw = extractKeywords(
+      "I am learning some new things, this is fun.",
+      5,
+    );
     // 英文停用词应被过滤
     expect(kw).not.toContain("i");
     expect(kw).not.toContain("is");

@@ -5,18 +5,17 @@
  * - 登出:POST /api/auth/logout → 清除 cookie
  * - 前端不再存储密码,不再信任 localStorage
  */
-// 仅 type-only import,编译后消失,不会把 server 模块拉进客户端 bundle
-import type { Permission } from "../../server/core/rbac"
+import type { Permission } from "../../server/core/rbac";
 
 export interface AuthUser {
-  isLoggedIn: boolean
-  isAdmin: boolean
-  role: string | null
-  roleMeta?: { label: string; description: string; rank: number } | null
-  username: string | null
-  userId: string | null
-  permissions: Permission[]
-  expiresAt: number | null
+  isLoggedIn: boolean;
+  isAdmin: boolean;
+  role: string | null;
+  roleMeta?: { label: string; description: string; rank: number } | null;
+  username: string | null;
+  userId: string | null;
+  permissions: Permission[];
+  expiresAt: number | null;
 }
 
 export function useAdminAuth() {
@@ -73,7 +72,7 @@ export function useAdminAuth() {
   /**
    * 登录:用户名 + 密码
    * 成功:isAdmin=true,currentUser 填充
-   * 失败:抛 Error(message = 后端 message),UI 自行 catch
+   * 失败:抛 Error(message = 后端 message)
    */
   async function login(username: string, password: string): Promise<boolean> {
     loading.value = true;
@@ -95,11 +94,8 @@ export function useAdminAuth() {
 
   // 登出:通知服务端清除 cookie
   async function logout() {
-    try {
-      await $fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // 忽略
-    }
+    await $fetch("/api/auth/logout", { method: "POST" });
+
     isAdmin.value = false;
     currentUser.value = {
       isLoggedIn: false,

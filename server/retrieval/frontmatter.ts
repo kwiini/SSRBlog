@@ -116,7 +116,8 @@ export function parseFrontmatter(content: string): ParseResult {
 
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i];
-    if (!rawLine || rawLine.trim() === "" || rawLine.trim().startsWith("#")) continue;
+    if (!rawLine || rawLine.trim() === "" || rawLine.trim().startsWith("#"))
+      continue;
 
     const line = stripTrailingComment(rawLine);
 

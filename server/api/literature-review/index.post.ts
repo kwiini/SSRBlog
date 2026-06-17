@@ -17,7 +17,7 @@ const MAP_CONCURRENCY = 3;
 async function mapConcurrent<T>(
   items: T[],
   fn: (item: T) => Promise<any>,
-  limit: number
+  limit: number,
 ): Promise<any[]> {
   const results: any[] = [];
   let idx = 0;
@@ -29,9 +29,8 @@ async function mapConcurrent<T>(
     }
   }
 
-  const workers = Array.from(
-    { length: Math.min(limit, items.length) },
-    () => worker()
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () =>
+    worker(),
   );
   await Promise.all(workers);
   return results;
@@ -50,7 +49,7 @@ export default defineEventHandler(async (event) => {
 
     const validPapers: PaperInput[] = papers.filter(
       (p: PaperInput) =>
-        p && typeof p.content === "string" && p.content.trim().length > 0
+        p && typeof p.content === "string" && p.content.trim().length > 0,
     );
     if (validPapers.length === 0) {
       throw createError({
@@ -63,7 +62,7 @@ export default defineEventHandler(async (event) => {
     const summaries = await mapConcurrent(
       validPapers,
       (p) => summarizeOnePaper(p.name, p.content),
-      MAP_CONCURRENCY
+      MAP_CONCURRENCY,
     );
 
     // Reduce：聚合所有摘要生成最终综述（内部自动分批）
@@ -87,8 +86,8 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: review,
-      factCheck,         // 完整事实核查报告(含 issues[]),null 表示降级
-      citations,         // 引用解析结果(含 [N] 标记提取 + 合法性验证)
+      factCheck, // 完整事实核查报告(含 issues[]),null 表示降级
+      citations, // 引用解析结果(含 [N] 标记提取 + 合法性验证)
     };
   } catch (error: any) {
     throw createError({

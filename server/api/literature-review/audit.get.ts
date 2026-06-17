@@ -26,7 +26,7 @@ export default defineEventHandler((event) => {
         WHERE user_id = ? AND review_id = ?
         ORDER BY created_at DESC
         LIMIT ?
-        `
+        `,
       )
       .all(userId, reviewId, limit);
   } else {
@@ -38,7 +38,7 @@ export default defineEventHandler((event) => {
         WHERE user_id = ?
         ORDER BY created_at DESC
         LIMIT ?
-        `
+        `,
       )
       .all(userId, limit);
   }

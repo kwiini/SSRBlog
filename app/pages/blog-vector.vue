@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 精致标题区 -->
+    <!-- 标题 -->
     <div class="mb-10">
       <div class="flex items-center gap-3 mb-3">
         <div
@@ -420,11 +420,11 @@
 </template>
 
 <script setup>
-const stats = ref(null);  // 向量状态信息
+const stats = ref(null); // 向量状态信息
 const searchQuery = ref(""); // 搜索查询
 const searchResults = ref([]); // 搜索结果
 const searched = ref(false); // 是否已搜索
-const error = ref(""); // 错误信息  
+const error = ref(""); // 错误信息
 
 const loading = ref({
   vectorize: false, // 向量化加载状态
@@ -434,11 +434,8 @@ const loading = ref({
 
 // 获取统计信息
 const fetchStats = async () => {
-  try {
-    const data = await $fetch("/api/blog/vectorize");
-    stats.value = data;
-  } catch (err) {
-  }
+  const data = await $fetch("/api/blog/vectorize");
+  stats.value = data;
 };
 
 // 格式化日期
@@ -532,7 +529,6 @@ useHead({ title: "博客向量化 - Curata" });
   transform: translateY(10px);
 }
 
-/* Toast 动画 */
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.3s ease;

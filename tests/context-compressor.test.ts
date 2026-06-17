@@ -13,7 +13,7 @@ import { compressContext } from "../server/processors/context-compressor";
 
 /** 数"句子"数(用 "。" 切,过滤空) */
 function countSentences(s: string): number {
-  return s.split("。").filter(x => x.trim().length > 0).length;
+  return s.split("。").filter((x) => x.trim().length > 0).length;
 }
 
 describe("compressContext", () => {
@@ -23,7 +23,9 @@ describe("compressContext", () => {
   });
 
   it("单句内容 → 不做截断,直接返回", () => {
-    const ctx = [{ content: "机器学习是人工智能的一个重要分支。", source: "a" } as any];
+    const ctx = [
+      { content: "机器学习是人工智能的一个重要分支。", source: "a" } as any,
+    ];
     const out = compressContext(ctx, "机器学习");
     expect(out).toHaveLength(1);
     expect(out[0]!.content).toBe("机器学习是人工智能的一个重要分支。");
@@ -40,7 +42,9 @@ describe("compressContext", () => {
     ] as any;
     const out = compressContext(ctx, "JavaScript", { keepSentences: 10 });
     // 去重后,完全相同的"JavaScript 是一种脚本语言。"应只剩 1 条
-    const occurrences = (out[0]!.content.match(/JavaScript 是一种脚本语言/g) || []).length;
+    const occurrences = (
+      out[0]!.content.match(/JavaScript 是一种脚本语言/g) || []
+    ).length;
     expect(occurrences).toBe(1);
   });
 
@@ -57,7 +61,10 @@ describe("compressContext", () => {
       "强化学习通过试错与环境交互学习策略。",
     ];
     const ctx = [{ content: sents.join("") }] as any;
-    const out = compressContext(ctx, "深度学习", { keepSentences: 8, maxLength: 30 });
+    const out = compressContext(ctx, "深度学习", {
+      keepSentences: 8,
+      maxLength: 30,
+    });
     // 截断后 ≤ maxLength + 1(省略号占 1 字符)
     expect(out[0]!.content.length).toBeLessThanOrEqual(31);
     expect(out[0]!.content.endsWith("…")).toBe(true);
@@ -75,19 +82,30 @@ describe("compressContext", () => {
       "Python 是开源的。",
     ];
     const ctx = [{ content: sents.join("") }] as any;
-    const out = compressContext(ctx, "Python", { keepSentences: 3, maxLength: 2000 });
+    const out = compressContext(ctx, "Python", {
+      keepSentences: 3,
+      maxLength: 2000,
+    });
     // 数句子数 ≤ keepSentences
     expect(countSentences(out[0]!.content)).toBeLessThanOrEqual(3);
   });
 
   it("removeDuplicates=false → 不去重", () => {
-    const s = "JavaScript 是一种脚本语言。JavaScript 是一种脚本语言。JavaScript 是一种脚本语言。";
+    const s =
+      "JavaScript 是一种脚本语言。JavaScript 是一种脚本语言。JavaScript 是一种脚本语言。";
     const ctx = [{ content: s }] as any;
     const dedup = compressContext(ctx, "JavaScript", { keepSentences: 10 });
-    const noDedup = compressContext(ctx, "JavaScript", { keepSentences: 10, removeDuplicates: false });
+    const noDedup = compressContext(ctx, "JavaScript", {
+      keepSentences: 10,
+      removeDuplicates: false,
+    });
     // 不去重时出现 ≥ 1 次
-    const dedupCount = (dedup[0]!.content.match(/JavaScript 是一种脚本语言/g) || []).length;
-    const noDedupCount = (noDedup[0]!.content.match(/JavaScript 是一种脚本语言/g) || []).length;
+    const dedupCount = (
+      dedup[0]!.content.match(/JavaScript 是一种脚本语言/g) || []
+    ).length;
+    const noDedupCount = (
+      noDedup[0]!.content.match(/JavaScript 是一种脚本语言/g) || []
+    ).length;
     expect(noDedupCount).toBeGreaterThanOrEqual(dedupCount);
   });
 
@@ -105,7 +123,10 @@ describe("compressContext", () => {
 
   it("无标点长文本按 50 字符硬切(不会无限膨胀)", () => {
     const noPunct = "a".repeat(120);
-    const out = compressContext([{ content: noPunct }] as any, "any", { keepSentences: 100, maxLength: 10000 });
+    const out = compressContext([{ content: noPunct }] as any, "any", {
+      keepSentences: 100,
+      maxLength: 10000,
+    });
     // 硬切后保留的应 <= 原长 + 少量 join 字符
     expect(out[0]!.content.length).toBeLessThanOrEqual(125);
   });

@@ -27,7 +27,7 @@ describe("expandQuery", () => {
     const out = expandQuery("js 性能优化");
     expect(out.synonyms.has("js")).toBe(true);
     // 至少含 javascript 变体
-    expect(out.variations.some(v => v.includes("javascript"))).toBe(true);
+    expect(out.variations.some((v) => v.includes("javascript"))).toBe(true);
   });
 
   it("未命中同义词词典时不产生变体(只有关键词)", () => {
@@ -55,12 +55,16 @@ describe("generateMultiQueries", () => {
     const out = generateMultiQueries("RAG");
     expect(out.length).toBeGreaterThan(1);
     expect(out).toContain("RAG");
-    expect(out.some(q => q.includes("什么是"))).toBe(true);
+    expect(out.some((q) => q.includes("什么是"))).toBe(true);
   });
 
   it("长查询(>= 20 字符)不扩展,只返原查询", () => {
-    const out = generateMultiQueries("如何在大规模企业级系统中实现高性能 RAG 检索增强生成架构");
-    expect(out).toEqual(["如何在大规模企业级系统中实现高性能 RAG 检索增强生成架构"]);
+    const out = generateMultiQueries(
+      "如何在大规模企业级系统中实现高性能 RAG 检索增强生成架构",
+    );
+    expect(out).toEqual([
+      "如何在大规模企业级系统中实现高性能 RAG 检索增强生成架构",
+    ]);
   });
 });
 
@@ -92,8 +96,7 @@ describe("rewriteQuery", () => {
   });
 
   it("LLM 成功时清洗(去引号 / 截第一行 / 截 80 字符)", async () => {
-    const fakeLLM = async () =>
-      `"RAG 检索增强生成技术" \n这是第二行,应被截断`;
+    const fakeLLM = async () => `"RAG 检索增强生成技术" \n这是第二行,应被截断`;
     const out = await rewriteQuery("RAG", fakeLLM);
     expect(out).not.toContain("\n");
     expect(out.length).toBeLessThanOrEqual(80);

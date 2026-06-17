@@ -25,7 +25,7 @@ export default defineEventHandler((event) => {
       FROM reviews r
       WHERE r.user_id = ?
       ORDER BY r.created_at DESC
-      `
+      `,
     )
     .all(userId);
 

@@ -56,11 +56,13 @@ export function postFileExists(rawPath: string, fromDraft = false): boolean {
 }
 
 function normalizeSlug(slug: string): string {
-  return slug
-    .trim()
-    .toLowerCase()
-    // 保留 ASCII 字母数字 + 连字符 + CJK 汉字;其他字符归一为 "-"
-    .replace(/[^a-z0-9\p{Script=Han}-]/gu, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  return (
+    slug
+      .trim()
+      .toLowerCase()
+      // 保留 ASCII 字母数字 + 连字符 + CJK 汉字;其他字符归一为 "-"
+      .replace(/[^a-z0-9\p{Script=Han}-]/gu, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
 }

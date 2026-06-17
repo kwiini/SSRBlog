@@ -55,7 +55,12 @@ export async function migrateFromJson(
   try {
     await fs.access(jsonPath);
   } catch {
-    return { migrated: 0, alreadyMigrated: false, jsonMissing: true, backupPath: null };
+    return {
+      migrated: 0,
+      alreadyMigrated: false,
+      jsonMissing: true,
+      backupPath: null,
+    };
   }
 
   // 2. 读 JSON
@@ -64,11 +69,16 @@ export async function migrateFromJson(
   if (!store.chunks || store.chunks.length === 0) {
     // 空的 JSON,直接备份
     await fs.rename(jsonPath, bakPath);
-    return { migrated: 0, alreadyMigrated: false, jsonMissing: false, backupPath: bakPath };
+    return {
+      migrated: 0,
+      alreadyMigrated: false,
+      jsonMissing: false,
+      backupPath: bakPath,
+    };
   }
 
   // 3. 转结构并写入
-  const records: ChunkRecord[] = store.chunks.map(c => ({
+  const records: ChunkRecord[] = store.chunks.map((c) => ({
     id: c.id,
     content: c.content,
     source: c.source,
@@ -84,7 +94,12 @@ export async function migrateFromJson(
   // 4. 备份(改名,不删)
   await fs.rename(jsonPath, bakPath);
 
-  return { migrated: records.length, alreadyMigrated: false, jsonMissing: false, backupPath: bakPath };
+  return {
+    migrated: records.length,
+    alreadyMigrated: false,
+    jsonMissing: false,
+    backupPath: bakPath,
+  };
 }
 
 /** 命令行直接跑 */
@@ -92,7 +107,9 @@ async function main() {
   try {
     const r = await migrateFromJson();
     if (r.jsonMissing) {
-      logger.info(`[migrate] JSON 不存在,跳过(data/curata.db 当前 ${getVectorDb().prepare("SELECT COUNT(*) AS n FROM vec_chunks").get() as any} 条)`);
+      logger.info(
+        `[migrate] JSON 不存在,跳过(data/curata.db 当前 ${getVectorDb().prepare("SELECT COUNT(*) AS n FROM vec_chunks").get() as any} 条)`,
+      );
     } else if (r.migrated > 0) {
       logger.info(`[migrate] 成功迁移 ${r.migrated} 条 → ${r.backupPath}`);
     } else {
@@ -107,7 +124,8 @@ async function main() {
 }
 
 // 仅当被直接当脚本执行时跑(ESM 没有 require.main, 走 argv 末位判断)
-const isMain = process.argv[1] && process.argv[1].endsWith("migrate-vectors.ts");
+const isMain =
+  process.argv[1] && process.argv[1].endsWith("migrate-vectors.ts");
 if (isMain) {
   main();
 }

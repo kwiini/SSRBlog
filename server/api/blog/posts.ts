@@ -41,13 +41,15 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 function normalizeSlug(slug: string): string {
-  return slug
-    .trim()
-    .toLowerCase()
-    // 保留 ASCII 字母数字 + 连字符 + CJK 汉字;其他字符归一为 "-"
-    .replace(/[^a-z0-9\p{Script=Han}-]/gu, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  return (
+    slug
+      .trim()
+      .toLowerCase()
+      // 保留 ASCII 字母数字 + 连字符 + CJK 汉字;其他字符归一为 "-"
+      .replace(/[^a-z0-9\p{Script=Han}-]/gu, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
 }
 
 /**
@@ -69,10 +71,7 @@ function yamlScalar(v: unknown, depth = 0): string {
         // 数组项是 block scalar 时,需要把指示符接到 dash 后,
         // 并把内容行重新缩进到 (itemDepth+1)*2 空格
         // 这样下一项的 dash(在 itemDepth*2 空格)缩进 < 内容缩进,能正确结束块
-        if (
-          itemYaml.startsWith("|") ||
-          itemYaml.startsWith(">")
-        ) {
+        if (itemYaml.startsWith("|") || itemYaml.startsWith(">")) {
           const dashIndent = " ".repeat(itemDepth * 2);
           const contentIndent = " ".repeat((itemDepth + 1) * 2);
           const lines = itemYaml.split("\n");
@@ -99,7 +98,10 @@ function yamlScalar(v: unknown, depth = 0): string {
     return (
       indicator +
       "\n" +
-      s.split("\n").map((line) => contentIndent + line).join("\n")
+      s
+        .split("\n")
+        .map((line) => contentIndent + line)
+        .join("\n")
     );
   }
   // 单行:双引号流式 + 完整转义
@@ -111,8 +113,9 @@ function yamlScalar(v: unknown, depth = 0): string {
       // 控制字符(除已单独处理的 \n \r \t):用 \x## 十六进制转义
       // 覆盖 NUL(0x00)、BEL(0x07)、BS(0x08)、VT(0x0B)、FF(0x0C)、
       // SO..US(0x0E-0x1F)、DEL(0x7F)
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, (c) =>
-        "\\x" + c.charCodeAt(0).toString(16).padStart(2, "0"),
+      .replace(
+        /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,
+        (c) => "\\x" + c.charCodeAt(0).toString(16).padStart(2, "0"),
       )
       .replace(/\t/g, "\\t")
       .replace(/\r/g, "\\r")
@@ -214,7 +217,10 @@ async function savePost(
   };
 }
 
-async function deletePost(path: string, fromDraft: boolean = false): Promise<void> {
+async function deletePost(
+  path: string,
+  fromDraft: boolean = false,
+): Promise<void> {
   // 走共享 helper:剥前缀 + normalizeSlug + 相对路径兜底,杜绝路径穿越
   const { filePath } = resolvePostFilePath(path, fromDraft);
   if (!(await fileExists(filePath))) {
@@ -263,7 +269,10 @@ export default defineEventHandler(async (event) => {
       const result = await savePost(body, false, "create");
       return { success: true, message: "草稿保存成功", data: result };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "保存草稿失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "保存草稿失败",
+      });
     }
   }
 
@@ -285,20 +294,29 @@ export default defineEventHandler(async (event) => {
         data: result,
       };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "操作失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "操作失败",
+      });
     }
   }
 
   if (method === "DELETE") {
     try {
-      const body = (await readBody(event)) as { path: string; fromDraft?: boolean };
+      const body = (await readBody(event)) as {
+        path: string;
+        fromDraft?: boolean;
+      };
       if (!body.path) {
         throw createError({ statusCode: 400, message: "缺少文章路径" });
       }
       await deletePost(body.path, body.fromDraft);
       return { success: true, message: "删除成功" };
     } catch (error: any) {
-      throw createError({ statusCode: 500, message: error.message || "删除失败" });
+      throw createError({
+        statusCode: 500,
+        message: error.message || "删除失败",
+      });
     }
   }
 

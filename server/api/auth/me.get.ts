@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const permissions = getPermissionsForRole(payload.role);
   return {
     isLoggedIn: true,
-    isAdmin: payload.role === "admin",  // 兼容旧字段
+    isAdmin: payload.role === "admin", // 兼容旧字段
     role: payload.role,
     roleMeta: ROLE_META[payload.role],
     username: payload.username,

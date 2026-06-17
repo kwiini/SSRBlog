@@ -9,21 +9,53 @@ import { requirePermission, type Permission } from "../core/auth";
 
 // 路径前缀 + 方法 → 所需权限
 // 写法:"POST /api/blog/posts" 需要 blog:create
-const PROTECTED: Array<{ prefix: string; methods: Set<string>; perm: Permission }> = [
+const PROTECTED: Array<{
+  prefix: string;
+  methods: Set<string>;
+  perm: Permission;
+}> = [
   // 博客
-  { prefix: "/api/blog/posts",       methods: new Set(["POST"]),        perm: "blog:create" },
-  { prefix: "/api/blog/posts",       methods: new Set(["PUT", "PATCH"]), perm: "blog:update" },
-  { prefix: "/api/blog/posts",       methods: new Set(["DELETE"]),      perm: "blog:delete" },
+  {
+    prefix: "/api/blog/posts",
+    methods: new Set(["POST"]),
+    perm: "blog:create",
+  },
+  {
+    prefix: "/api/blog/posts",
+    methods: new Set(["PUT", "PATCH"]),
+    perm: "blog:update",
+  },
+  {
+    prefix: "/api/blog/posts",
+    methods: new Set(["DELETE"]),
+    perm: "blog:delete",
+  },
   // 向量
-  { prefix: "/api/blog/vectorize",   methods: new Set(["POST"]),        perm: "vectorize:run" },
-  { prefix: "/api/blog/vectorize",   methods: new Set(["DELETE"]),      perm: "vectorize:delete" },
+  {
+    prefix: "/api/blog/vectorize",
+    methods: new Set(["POST"]),
+    perm: "vectorize:run",
+  },
+  {
+    prefix: "/api/blog/vectorize",
+    methods: new Set(["DELETE"]),
+    perm: "vectorize:delete",
+  },
   // 用户管理
-  { prefix: "/api/users",            methods: new Set(["GET"]),         perm: "user:list" },
-  { prefix: "/api/users",            methods: new Set(["POST"]),        perm: "user:create" },
-  { prefix: "/api/users",            methods: new Set(["PUT", "PATCH"]), perm: "user:update" },
-  { prefix: "/api/users",            methods: new Set(["DELETE"]),      perm: "user:delete" },
+  { prefix: "/api/users", methods: new Set(["GET"]), perm: "user:list" },
+  { prefix: "/api/users", methods: new Set(["POST"]), perm: "user:create" },
+  {
+    prefix: "/api/users",
+    methods: new Set(["PUT", "PATCH"]),
+    perm: "user:update",
+  },
+  { prefix: "/api/users", methods: new Set(["DELETE"]), perm: "user:delete" },
   // 综述生成(写操作,需要 review:generate)
-  { prefix: "/api/literature-review", methods: new Set(["POST"]),       perm: "review:generate" },
+  {
+    prefix: "/api/literature-review",
+    methods: new Set(["POST"]),
+    perm: "review:generate",
+  },
 ];
 
 export default defineEventHandler((event) => {

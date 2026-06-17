@@ -17,7 +17,7 @@
  *   system:*      系统配置(只 admin)
  */
 
-export type Role = "admin" | "editor" | "reviewer" | "viewer"
+export type Role = "admin" | "editor" | "reviewer" | "viewer";
 
 export type Permission =
   | "blog:create"
@@ -36,47 +36,61 @@ export type Permission =
   | "user:update"
   | "user:delete"
   | "system:config"
-  | "system:cache:clear"
+  | "system:cache:clear";
 
-export const ALL_ROLES: Role[] = ["admin", "editor", "reviewer", "viewer"]
+export const ALL_ROLES: Role[] = ["admin", "editor", "reviewer", "viewer"];
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   admin: [
     // 全开
-    "blog:create", "blog:update", "blog:delete", "blog:read",
-    "vectorize:run", "vectorize:delete",
-    "rag:query", "rag:chat",
-    "review:generate", "review:read",
+    "blog:create",
+    "blog:update",
+    "blog:delete",
+    "blog:read",
+    "vectorize:run",
+    "vectorize:delete",
+    "rag:query",
+    "rag:chat",
+    "review:generate",
+    "review:read",
     "comment:create",
-    "user:list", "user:create", "user:update", "user:delete",
-    "system:config", "system:cache:clear",
+    "user:list",
+    "user:create",
+    "user:update",
+    "user:delete",
+    "system:config",
+    "system:cache:clear",
   ],
   editor: [
-    "blog:create", "blog:update", "blog:delete", "blog:read",
-    "vectorize:run", "vectorize:delete",
-    "rag:query", "rag:chat",
-    "review:generate", "review:read",
+    "blog:create",
+    "blog:update",
+    "blog:delete",
+    "blog:read",
+    "vectorize:run",
+    "vectorize:delete",
+    "rag:query",
+    "rag:chat",
+    "review:generate",
+    "review:read",
     "comment:create",
   ],
   reviewer: [
     "blog:read",
-    "rag:query", "rag:chat",
-    "review:generate", "review:read",
+    "rag:query",
+    "rag:chat",
+    "review:generate",
+    "review:read",
     "comment:create",
   ],
-  viewer: [
-    "blog:read",
-    "rag:query", "rag:chat",
-    "review:read",
-  ],
-}
+  viewer: ["blog:read", "rag:query", "rag:chat", "review:read"],
+};
 
 /**
  * 角色 → 权限列表(含 * 通配:admin 拿全集,其它角色按 ROLE_PERMISSIONS 表)
  */
 export function getPermissionsForRole(role: Role): Permission[] {
-  if (role === "admin") return ROLE_PERMISSIONS.admin
-  return ROLE_PERMISSIONS[role] || []
+  if (role === "admin") return ROLE_PERMISSIONS.admin;
+  return ROLE_PERMISSIONS[role] || [];
 }
 
 /**
@@ -85,8 +99,8 @@ export function getPermissionsForRole(role: Role): Permission[] {
  * - "blog:create" 这种精确点按 ROLE_PERMISSIONS 查
  */
 export function roleHasPermission(role: Role, perm: Permission): boolean {
-  if (role === "admin") return true
-  return ROLE_PERMISSIONS[role]?.includes(perm) ?? false
+  if (role === "admin") return true;
+  return ROLE_PERMISSIONS[role]?.includes(perm) ?? false;
 }
 
 /**
@@ -94,29 +108,58 @@ export function roleHasPermission(role: Role, perm: Permission): boolean {
  */
 export function isValidPermission(p: string): p is Permission {
   return [
-    "blog:create", "blog:update", "blog:delete", "blog:read",
-    "vectorize:run", "vectorize:delete",
-    "rag:query", "rag:chat",
-    "review:generate", "review:read",
+    "blog:create",
+    "blog:update",
+    "blog:delete",
+    "blog:read",
+    "vectorize:run",
+    "vectorize:delete",
+    "rag:query",
+    "rag:chat",
+    "review:generate",
+    "review:read",
     "comment:create",
-    "user:list", "user:create", "user:update", "user:delete",
-    "system:config", "system:cache:clear",
-  ].includes(p)
+    "user:list",
+    "user:create",
+    "user:update",
+    "user:delete",
+    "system:config",
+    "system:cache:clear",
+  ].includes(p);
 }
 
 /**
  * 校验角色是否合法
  */
 export function isValidRole(r: string): r is Role {
-  return ALL_ROLES.includes(r as Role)
+  return ALL_ROLES.includes(r as Role);
 }
 
 /**
  * 角色展示信息
  */
-export const ROLE_META: Record<Role, { label: string; description: string; rank: number }> = {
-  admin:    { label: "管理员", description: "全部权限,可管理用户和系统配置", rank: 4 },
-  editor:   { label: "编辑者", description: "可创建/修改博客、向量、综述,不可管理用户", rank: 3 },
-  reviewer: { label: "审核员", description: "可生成综述、评论,不可修改内容", rank: 2 },
-  viewer:   { label: "访客",   description: "只读,可用 RAG 问答和查看综述",         rank: 1 },
-}
+export const ROLE_META: Record<
+  Role,
+  { label: string; description: string; rank: number }
+> = {
+  admin: {
+    label: "管理员",
+    description: "全部权限,可管理用户和系统配置",
+    rank: 4,
+  },
+  editor: {
+    label: "编辑者",
+    description: "可创建/修改博客、向量、综述,不可管理用户",
+    rank: 3,
+  },
+  reviewer: {
+    label: "审核员",
+    description: "可生成综述、评论,不可修改内容",
+    rank: 2,
+  },
+  viewer: {
+    label: "访客",
+    description: "只读,可用 RAG 问答和查看综述",
+    rank: 1,
+  },
+};

@@ -85,10 +85,7 @@ export function getDb(): Database.Database {
  * 生成简短 ID
  */
 export function generateId(): string {
-  return (
-    Date.now().toString(36) +
-    Math.random().toString(36).substring(2, 10)
-  );
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
 }
 
 /**
@@ -104,7 +101,7 @@ export function logAudit(params: {
 }): void {
   const db = getDb();
   db.prepare(
-    `INSERT INTO audit_logs (id, review_id, user_id, user_name, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO audit_logs (id, review_id, user_id, user_name, action, detail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     generateId(),
     params.reviewId,
@@ -112,7 +109,7 @@ export function logAudit(params: {
     params.userName || null,
     params.action,
     params.detail || null,
-    Date.now()
+    Date.now(),
   );
 }
 
@@ -122,7 +119,9 @@ export function logAudit(params: {
 export function isDbHealthy(): boolean {
   try {
     const db = getDb();
-    const row = db.prepare("SELECT 1 as ok").get() as { ok: number } | undefined;
+    const row = db.prepare("SELECT 1 as ok").get() as
+      | { ok: number }
+      | undefined;
     return row?.ok === 1;
   } catch {
     return false;

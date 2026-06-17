@@ -10,7 +10,7 @@ export default defineEventHandler(async () => {
   const users = await listUsers();
   return {
     success: true,
-    data: users.map(u => ({
+    data: users.map((u) => ({
       ...toPublicUser(u),
       roleMeta: ROLE_META[u.role],
     })),

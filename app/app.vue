@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 // 初始化暗色模式(读取 localStorage / 跟随系统)
-useColorMode()
+useColorMode();
 </script>
 
 <style>

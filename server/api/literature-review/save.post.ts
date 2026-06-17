@@ -1,6 +1,6 @@
 /**
  * POST /api/literature-review/save
- * 持久化一篇综述（含全部 papers 的全文），用于央企办公室可追溯归档
+ * 持久化一篇综述（含全部 papers 的全文）
  * Body: { userName?, reviewId?, field, background, innovation, trend, thoughts, reporter, date, papers[] }
  * userId 来自登录态(cookie → requireAuth)
  */
@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     `);
 
     const deletePapers = db.prepare(
-      `DELETE FROM review_papers WHERE review_id = ?`
+      `DELETE FROM review_papers WHERE review_id = ?`,
     );
     const insertPaper = db.prepare(`
       INSERT INTO review_papers (
@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
         body.reporter || null,
         body.date || null,
         now,
-        now
+        now,
       );
 
       deletePapers.run(reviewId);
@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
           p.isDoc ? 1 : 0,
           p.content || null,
           p.htmlContent || null,
-          idx
+          idx,
         );
       });
 
