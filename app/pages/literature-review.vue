@@ -545,293 +545,293 @@
         </svg>
         <span>{{ generating ? "正在生成综述..." : "生成文献综述" }}</span>
       </button>
+    </div>
 
-      <!-- 综述结果 -->
-      <!-- reviewResult 是客户端态(打开归档后才有数据),server 渲染时是 null → 包 ClientOnly 避免 hydration mismatch -->
-      <ClientOnly>
+    <!-- 综述结果 -->
+    <!-- reviewResult 是客户端态(打开归档后才有数据),server 渲染时是 null → 包 ClientOnly 避免 hydration mismatch -->
+    <ClientOnly>
+      <div
+        v-if="reviewResult"
+        class="space-y-6"
+      >
+        <!-- 操作栏 -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-stone-800">综述结果</h2>
+          <div class="flex items-center gap-2">
+            <button
+              class="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-stone-800 hover:bg-stone-700 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              :disabled="savingArchive"
+              @click="saveToArchive"
+            >
+              <svg
+                v-if="!savingArchive"
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                />
+              </svg>
+              <span v-else>保存中…</span>
+              <span v-if="!savingArchive">保存到归档</span>
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1.5"
+              @click="copyResult"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              复制
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1.5"
+              @click="exportMarkdown"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              导出 Markdown
+            </button>
+          </div>
+        </div>
+
+        <!-- 综述卡片 -->
         <div
-          v-if="reviewResult"
-          class="space-y-6"
+          class="bg-white border border-stone-200/60 rounded-2xl overflow-hidden"
         >
-          <!-- 操作栏 -->
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-stone-800">综述结果</h2>
-            <div class="flex items-center gap-2">
-              <button
-                class="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-stone-800 hover:bg-stone-700 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                :disabled="savingArchive"
-                @click="saveToArchive"
-              >
-                <svg
-                  v-if="!savingArchive"
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          <!-- 基本信息 -->
+          <div class="p-6 border-b border-stone-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-stone-500 mb-1.5"
+                  >研究领域</label
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                  />
-                </svg>
-                <span v-else>保存中…</span>
-                <span v-if="!savingArchive">保存到归档</span>
-              </button>
-              <button
-                class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1.5"
-                @click="copyResult"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <input
+                  v-model="reviewResult.field"
+                  type="text"
+                  class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
+                  placeholder="填写研究领域"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-stone-500 mb-1.5"
+                  >汇报人</label
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                复制
-              </button>
-              <button
-                class="px-3 py-1.5 rounded-lg text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1.5"
-                @click="exportMarkdown"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <input
+                  v-model="reviewResult.reporter"
+                  type="text"
+                  class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
+                  placeholder="填写汇报人姓名"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-stone-500 mb-1.5"
+                  >汇报日期</label
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                导出 Markdown
-              </button>
+                <input
+                  v-model="reviewResult.date"
+                  type="date"
+                  class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-stone-500 mb-1.5"
+                  >文献数量</label
+                >
+                <input
+                  :value="papers.length + ' 篇'"
+                  type="text"
+                  readonly
+                  class="w-full px-3 py-2 bg-stone-100 border border-stone-200 rounded-lg text-sm text-stone-500 cursor-not-allowed"
+                />
+              </div>
             </div>
           </div>
 
-          <!-- 综述卡片 -->
-          <div
-            class="bg-white border border-stone-200/60 rounded-2xl overflow-hidden"
-          >
-            <!-- 基本信息 -->
-            <div class="p-6 border-b border-stone-100">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-medium text-stone-500 mb-1.5"
-                    >研究领域</label
-                  >
-                  <input
-                    v-model="reviewResult.field"
-                    type="text"
-                    class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
-                    placeholder="填写研究领域"
-                  />
+          <!-- 可编辑的综述内容 -->
+          <div class="p-6 space-y-6">
+            <!-- 研究背景 -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
+                <h3 class="text-sm font-semibold text-stone-700">
+                  研究背景与意义
+                </h3>
+              </div>
+              <textarea
+                v-model="reviewResult.background"
+                rows="4"
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
+                placeholder="文献涉及的研究背景与意义..."
+              ></textarea>
+            </div>
+
+            <!-- 核心内容 -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
+                <h3 class="text-sm font-semibold text-stone-700">
+                  核心内容梳理
+                </h3>
+              </div>
+              <div class="space-y-3">
+                <div
+                  v-for="(item, idx) in reviewResult.coreContents"
+                  :key="idx"
+                  class="bg-stone-50 border border-stone-200 rounded-xl p-4"
+                >
+                  <div class="flex items-start gap-3">
+                    <span
+                      class="w-6 h-6 rounded-md bg-stone-200 flex items-center justify-center text-xs font-medium text-stone-600 shrink-0 mt-0.5"
+                      >{{ idx + 1 }}</span
+                    >
+                    <div class="flex-1 space-y-2">
+                      <input
+                        v-model="item.title"
+                        type="text"
+                        class="w-full px-2 py-1 bg-white border border-stone-200 rounded-md text-sm font-medium text-stone-700 focus:outline-none focus:border-stone-400"
+                        placeholder="文献标题"
+                      />
+                      <textarea
+                        v-model="item.summary"
+                        rows="2"
+                        class="w-full px-2 py-1.5 bg-white border border-stone-200 rounded-md text-sm text-stone-600 leading-relaxed focus:outline-none focus:border-stone-400 resize-y"
+                        placeholder="该文献的核心观点与贡献..."
+                      ></textarea>
+                      <div class="flex gap-2">
+                        <input
+                          v-model="item.method"
+                          type="text"
+                          class="flex-1 px-2 py-1 bg-white border border-stone-200 rounded-md text-xs text-stone-500 focus:outline-none focus:border-stone-400"
+                          placeholder="研究方法"
+                        />
+                        <input
+                          v-model="item.conclusion"
+                          type="text"
+                          class="flex-1 px-2 py-1 bg-white border border-stone-200 rounded-md text-xs text-stone-500 focus:outline-none focus:border-stone-400"
+                          placeholder="主要结论"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      class="w-6 h-6 rounded-md flex items-center justify-center text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
+                      @click="removeCoreItem(idx)"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-stone-500 mb-1.5"
-                    >汇报人</label
+                <button
+                  class="w-full py-2 border border-dashed border-stone-300 rounded-xl text-xs text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all flex items-center justify-center gap-1.5"
+                  @click="addCoreItem"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                  <input
-                    v-model="reviewResult.reporter"
-                    type="text"
-                    class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
-                    placeholder="填写汇报人姓名"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-stone-500 mb-1.5"
-                    >汇报日期</label
-                  >
-                  <input
-                    v-model="reviewResult.date"
-                    type="date"
-                    class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-700 focus:outline-none focus:border-stone-400 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-stone-500 mb-1.5"
-                    >文献数量</label
-                  >
-                  <input
-                    :value="papers.length + ' 篇'"
-                    type="text"
-                    readonly
-                    class="w-full px-3 py-2 bg-stone-100 border border-stone-200 rounded-lg text-sm text-stone-500 cursor-not-allowed"
-                  />
-                </div>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  添加文献条目
+                </button>
               </div>
             </div>
 
-            <!-- 可编辑的综述内容 -->
-            <div class="p-6 space-y-6">
-              <!-- 研究背景 -->
-              <div>
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
-                  <h3 class="text-sm font-semibold text-stone-700">
-                    研究背景与意义
-                  </h3>
-                </div>
-                <textarea
-                  v-model="reviewResult.background"
-                  rows="4"
-                  class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
-                  placeholder="文献涉及的研究背景与意义..."
-                ></textarea>
+            <!-- 创新点对比 -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
+                <h3 class="text-sm font-semibold text-stone-700">
+                  创新点与对比分析
+                </h3>
               </div>
+              <textarea
+                v-model="reviewResult.innovation"
+                rows="4"
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
+                placeholder="各文献的创新点对比分析..."
+              ></textarea>
+            </div>
 
-              <!-- 核心内容 -->
-              <div>
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
-                  <h3 class="text-sm font-semibold text-stone-700">
-                    核心内容梳理
-                  </h3>
-                </div>
-                <div class="space-y-3">
-                  <div
-                    v-for="(item, idx) in reviewResult.coreContents"
-                    :key="idx"
-                    class="bg-stone-50 border border-stone-200 rounded-xl p-4"
-                  >
-                    <div class="flex items-start gap-3">
-                      <span
-                        class="w-6 h-6 rounded-md bg-stone-200 flex items-center justify-center text-xs font-medium text-stone-600 shrink-0 mt-0.5"
-                        >{{ idx + 1 }}</span
-                      >
-                      <div class="flex-1 space-y-2">
-                        <input
-                          v-model="item.title"
-                          type="text"
-                          class="w-full px-2 py-1 bg-white border border-stone-200 rounded-md text-sm font-medium text-stone-700 focus:outline-none focus:border-stone-400"
-                          placeholder="文献标题"
-                        />
-                        <textarea
-                          v-model="item.summary"
-                          rows="2"
-                          class="w-full px-2 py-1.5 bg-white border border-stone-200 rounded-md text-sm text-stone-600 leading-relaxed focus:outline-none focus:border-stone-400 resize-y"
-                          placeholder="该文献的核心观点与贡献..."
-                        ></textarea>
-                        <div class="flex gap-2">
-                          <input
-                            v-model="item.method"
-                            type="text"
-                            class="flex-1 px-2 py-1 bg-white border border-stone-200 rounded-md text-xs text-stone-500 focus:outline-none focus:border-stone-400"
-                            placeholder="研究方法"
-                          />
-                          <input
-                            v-model="item.conclusion"
-                            type="text"
-                            class="flex-1 px-2 py-1 bg-white border border-stone-200 rounded-md text-xs text-stone-500 focus:outline-none focus:border-stone-400"
-                            placeholder="主要结论"
-                          />
-                        </div>
-                      </div>
-                      <button
-                        class="w-6 h-6 rounded-md flex items-center justify-center text-stone-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
-                        @click="removeCoreItem(idx)"
-                      >
-                        <svg
-                          class="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    class="w-full py-2 border border-dashed border-stone-300 rounded-xl text-xs text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all flex items-center justify-center gap-1.5"
-                    @click="addCoreItem"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.5"
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    添加文献条目
-                  </button>
-                </div>
+            <!-- 研究趋势 -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
+                <h3 class="text-sm font-semibold text-stone-700">
+                  研究趋势与展望
+                </h3>
               </div>
+              <textarea
+                v-model="reviewResult.trend"
+                rows="4"
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
+                placeholder="该领域的研究趋势与未来展望..."
+              ></textarea>
+            </div>
 
-              <!-- 创新点对比 -->
-              <div>
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
-                  <h3 class="text-sm font-semibold text-stone-700">
-                    创新点与对比分析
-                  </h3>
-                </div>
-                <textarea
-                  v-model="reviewResult.innovation"
-                  rows="4"
-                  class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
-                  placeholder="各文献的创新点对比分析..."
-                ></textarea>
+            <!-- 个人思考 -->
+            <div>
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
+                <h3 class="text-sm font-semibold text-stone-700">
+                  个人思考与启发
+                </h3>
               </div>
-
-              <!-- 研究趋势 -->
-              <div>
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
-                  <h3 class="text-sm font-semibold text-stone-700">
-                    研究趋势与展望
-                  </h3>
-                </div>
-                <textarea
-                  v-model="reviewResult.trend"
-                  rows="4"
-                  class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
-                  placeholder="该领域的研究趋势与未来展望..."
-                ></textarea>
-              </div>
-
-              <!-- 个人思考 -->
-              <div>
-                <div class="flex items-center gap-2 mb-3">
-                  <div class="w-1 h-4 bg-stone-400 rounded-full"></div>
-                  <h3 class="text-sm font-semibold text-stone-700">
-                    个人思考与启发
-                  </h3>
-                </div>
-                <textarea
-                  v-model="reviewResult.thoughts"
-                  rows="4"
-                  class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
-                  placeholder="阅读后的个人思考与对工作的启发..."
-                ></textarea>
-              </div>
+              <textarea
+                v-model="reviewResult.thoughts"
+                rows="4"
+                class="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm text-stone-700 leading-relaxed focus:outline-none focus:border-stone-400 transition-colors resize-y"
+                placeholder="阅读后的个人思考与对工作的启发..."
+              ></textarea>
             </div>
           </div>
         </div>
-      </ClientOnly>
-    </div>
+      </div>
+    </ClientOnly>
   </div>
 </template>
 
