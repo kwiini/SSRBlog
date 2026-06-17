@@ -1,181 +1,229 @@
 # Curata
 
-> 央企办公室小组内部使用的 AI 智能文献综述工具。从已有文章库中选取或上传新文献，一键生成结构化、可汇报的文献综述。
+Nuxt 4 全栈应用。文献综述生成 + RAG 知识库问答 + 文章管理，统一走 OpenAI 兼容的 LLM 接口。
 
-## ✨ 核心功能
+## 架构概览
 
-- 📚 **文献综述一键生成** - 上传文献或从文章库中选择，AI 自动提炼研究背景、核心内容、创新点、研究趋势
-- 🎯 **多源文献组合** - 灵活组合多篇文献，AI 综合分析各篇内容、归纳异同
-- 📝 **五段式结构化输出** - 「研究背景 / 核心内容梳理 / 创新点对比 / 研究趋势 / 个人思考」模板，可直接套用汇报
-- ✍️ **在线可编辑** - 生成结果支持在线微调、补充个人思考
-- 📤 **导出 Markdown** - 一键导出 `.md` 文件，便于二次排版与归档
-- 🔍 **辅助知识库** - 基于文章库的智能问答、语义搜索与相关文章推荐
-- 🎨 **自然风格 UI** - Tailwind CSS 4 打造的石系色调界面，长时间阅读不疲劳
+| 层 | 技术 | 用途 |
+| --- | --- | --- |
+| 前端 | Nuxt 4 + Vue 3 + Tailwind CSS 4 | 页面、组件、组合式函数 |
+| 内容层 | @nuxt/content v3 + content.config.ts | `content/articles/` 下 Markdown 文档的查询与渲染 |
+| 应用层 | Nuxt server routes (H3) | REST API 入口、JWT 鉴权、RBAC 中间件 |
+| 检索层 | sqlite-vec + 自研 BM25 + LLM Cross-Encoder | 向量 KNN、关键词召回、LLM 重排 |
+| 生成层 | OpenAI 兼容 Chat Completions | 综述生成、问答、改写 |
+| 存储 | better-sqlite3 | 用户、综述归档、向量；数据文件 `data/curata.db` |
 
-## 🛠️ 技术栈
-
-- **框架**: [Nuxt 4](https://nuxt.com/) - Vue 3 全栈框架，支持 SSR/SSG
-- **样式**: [Tailwind CSS 4](https://tailwindcss.com/) - 原子化 CSS 框架
-- **内容管理**: [@nuxt/content](https://content.nuxt.com/) - 基于文件的 CMS，承载文献库
-- **AI 集成**: 支持 OpenAI 兼容 API（默认阿里云百炼 / Qwen）
-- **向量存储**: 本地 JSON 文件存储文章向量（轻量、易部署）
-- **数据库**: Better SQLite3
-
-## 📁 项目结构
+## 目录结构
 
 ```
 curata/
-├── app/                      # 前端应用代码
-│   ├── assets/css/           # 全局样式
-│   ├── composables/          # 组合式函数
-│   │   └── useAdminAuth.ts   # 管理员认证
-│   ├── layouts/              # 页面布局
-│   │   ├── default.vue       # 默认布局
-│   │   └── admin.vue         # 后台布局
-│   ├── pages/                # 页面路由
-│   │   ├── index.vue         # 首页(文献库列表)
-│   │   ├── articles/         # 文章详情页
-│   │   ├── literature-review.vue # 📚 文献综述生成(核心)
-│   │   ├── chat.vue          # 知识库问答
-│   │   ├── blog-vector.vue   # 知识库管理
-│   │   └── admin/            # 后台管理
-│   └── app.vue               # 应用入口
-├── content/                  # Markdown 文献库
-│   └── articles/             # 文献文件
-├── server/                   # 服务端代码
-│   ├── api/                  # API 接口
-│   │   ├── literature-review/ # 📚 文献综述生成接口(核心)
-│   │   ├── posts.ts          # 文献列表接口
-│   │   ├── aichat.ts         # AI 对话接口
-│   │   ├── aichat-stream.ts  # 流式对话接口
-│   │   ├── rag-chat.ts       # RAG 知识库对话
-│   │   ├── blog-vectorize.ts # 文献向量化
-│   │   ├── blog-search.ts    # 文献搜索
-│   │   ├── embedding.ts      # 文本嵌入接口
-│   │   └── related-posts.ts  # 相关文献推荐
-│   └── utils/                # 服务端工具函数
-│       ├── llm.ts            # LLM 调用封装
-│       ├── rag.ts            # RAG 核心逻辑
-│       ├── chunker.ts        # 文本分块处理
-│       └── embedding-cache.ts # 向量缓存
-├── data/                     # 数据存储
-│   └── blog-vectors.json     # 文献向量数据库
-├── public/                   # 静态资源
-├── nuxt.config.ts            # Nuxt 配置
-└── package.json              # 项目依赖
+├── app/                          # 前端
+│   ├── app.vue                   # 入口
+│   ├── layouts/default.vue       # 通用布局
+│   ├── pages/
+│   │   ├── index.vue             # 文章列表(@nuxt/content 查询)
+│   │   ├── articles/[...slug].vue# 文章详情 + 相关文章
+│   │   ├── literature-review.vue # 综述生成 / 归档
+│   │   ├── chat.vue              # 知识库问答
+│   │   ├── blog-vector.vue       # 向量化控制台
+│   │   └── admin/
+│   │       ├── index.vue         # 文章 + 草稿管理
+│   │       └── write.vue         # 文章编辑器
+│   ├── composables/
+│   │   ├── useAdminAuth.ts       # 登录态 / RBAC 客户端
+│   │   └── useColorMode.ts       # 暗色模式
+│   ├── components/CurataLogo.vue
+│   ├── plugins/api-auth.client.ts
+│   └── lib/logger.ts
+├── server/
+│   ├── api/                      # 业务 API
+│   │   ├── auth/                 # /api/auth/{login,logout,me}
+│   │   ├── blog/                 # 博客 CRUD / 向量 / 搜索 / 关联
+│   │   ├── chat/                 # 流式 AI 对话 / RAG
+│   │   ├── literature-review/    # 综述生成 / 归档 / 审计
+│   │   ├── posts/get.ts          # 单篇文章原始内容
+│   │   └── ai-config.get.ts      # 客户端 AI 配置探测
+│   ├── core/                     # 基础设施
+│   │   ├── auth.ts               # requireAuth / requirePermission
+│   │   ├── rbac.ts               # 角色与权限点
+│   │   ├── user-store.ts         # PBKDF2 密码哈希 + JSON 用户表
+│   │   ├── db.ts                 # SQLite 连接 / 建表 / 审计日志
+│   │   ├── prompts.ts            # 集中托管的 prompt 模板
+│   │   └── llm/                  # client / stream-client / cache / rate-limiter / tokens
+│   ├── middleware/auth.ts        # 路径前缀 → 权限点映射
+│   ├── plugins/bootstrap.ts      # 首次启动引导 admin
+│   ├── services/
+│   │   ├── rag.service.ts        # 检索 + 增强 + 上下文压缩 + RAG
+│   │   └── review.service.ts     # Map-Reduce 综述生成
+│   ├── retrieval/                # 检索子模块
+│   │   ├── hybrid.ts             # 向量 + BM25 混合召回
+│   │   ├── vector.ts             # embedding 缓存 + 余弦
+│   │   ├── vector-db.ts          # sqlite-vec 封装
+│   │   ├── bm25.ts               # 关键词召回
+│   │   ├── query-expansion.ts    # 同义词 / step-back / HyDE
+│   │   ├── reranker.ts           # LLM Cross-Encoder / MMR / RRF
+│   │   ├── chunker.ts            # Markdown / 纯文本分块
+│   │   ├── frontmatter.ts        # 极简 frontmatter 解析
+│   │   ├── post-path.ts          # 文章路径安全解析
+│   │   └── migrate-vectors.ts    # 老 JSON → SQLite 一次性迁移
+│   ├── processors/               # 文本后处理
+│   │   ├── context-compressor.ts # Jaccard 去重 + 关键词密度排序
+│   │   ├── history-compressor.ts # 对话历史压缩
+│   │   └── text-extractor.ts     # 论文关键章节抽取
+│   ├── lib/logger.ts             # consola 统一入口
+│   └── types/env.d.ts
+├── tests/                        # vitest 单元测试
+├── content/
+│   └── articles/                 # Markdown 文献库(@nuxt/content 源)
+├── data/                         # 运行时数据
+│   ├── curata.db                 # SQLite(用户 / 综述 / 向量)
+│   └── users.json                # 用户表
+├── content.config.ts             # @nuxt/content v3 collection 定义
+├── nuxt.config.ts                # Nuxt 配置 + runtimeConfig
+├── tsconfig.json
+├── vitest.config.ts
+└── package.json
 ```
 
-## 🚀 快速开始
+## 角色与权限
+
+`server/core/rbac.ts` 中定义 4 种角色，对应 13 个权限点：
+
+| 角色 | 范围 |
+| --- | --- |
+| `admin` | 全部权限(含系统配置) |
+| `editor` | 博客 CRUD、向量、综述、评论、RAG |
+| `reviewer` | 综述生成、评论、阅读、RAG |
+| `viewer` | 只读 + RAG |
+
+`server/middleware/auth.ts` 将 URL 前缀 + HTTP 方法映射到具体权限点。
+
+## API
+
+| 路径 | 方法 | 权限 | 用途 |
+| --- | --- | --- | --- |
+| `/api/auth/login` | POST | — | 登录,下发 JWT cookie |
+| `/api/auth/logout` | POST | — | 清除 cookie |
+| `/api/auth/me` | GET | — | 当前会话 |
+| `/api/ai-config` | GET | — | 客户端 AI 配置探测(模型名脱敏) |
+| `/api/blog/posts` | POST / PUT / PATCH / DELETE | `blog:*` | 文章 / 草稿 CRUD |
+| `/api/blog/posts?listDrafts=1` | GET | `blog:read` | 列出草稿 |
+| `/api/blog/vectorize` | GET / POST / DELETE | `vectorize:*` | 统计 / 重建 / 清空 |
+| `/api/blog/search` | GET | `blog:read` | 关键词 + 向量混合搜索 |
+| `/api/blog/related` | GET | `blog:read` | 相关文章推荐 |
+| `/api/chat/aichat-stream` | GET | `rag:query` | 流式对话 |
+| `/api/chat/rag-chat` | POST | `rag:query` | RAG 问答 |
+| `/api/literature-review` | POST | `review:generate` | 综述生成 |
+| `/api/literature-review/save` | POST | `review:generate` | 持久化综述 |
+| `/api/literature-review/list` | GET | `review:read` | 当前用户归档列表 |
+| `/api/literature-review/[id]` | GET / DELETE | `review:read` | 单条详情 / 删除 |
+| `/api/literature-review/audit` | GET | `review:read` | 审计日志 |
+| `/api/posts/get` | GET | `blog:read` | 读取单篇原始 Markdown |
+
+## 核心数据流
+
+### 综述生成
+
+```
+papers[]
+  → server/services/review.service.ts
+  → processors/text-extractor.ts(章节抽取 + 预算控制)
+  → LLM 单篇摘要(Map 阶段)
+  → LLM 批次合并(Reduce 阶段,BATCH_SIZE=6)
+  → 持久化到 SQLite reviews / review_papers
+```
+
+### RAG 问答
+
+```
+question
+  → retrieval/query-expansion.ts(同义词 / step-back / HyDE)
+  → retrieval/hybrid.ts(向量 KNN + BM25,去重到文章级)
+  → retrieval/reranker.ts(LLM Cross-Encoder 重排,可选 MMR)
+  → processors/context-compressor.ts(600 字预算,关键词密度排序)
+  → core/prompts.ts 拼装 prompt
+  → LLM 流式输出
+```
+
+### 向量化
+
+```
+content/articles/*.md
+  → retrieval/chunker.ts(按 ## 切分,800/150)
+  → core/llm/client.ts 调 embedding(带 LRU + TTL + 请求合并)
+  → retrieval/vector-db.ts 写入 sqlite-vec vec0 表
+  → 启动时自动从老 data/blog-vectors.json 迁移并备份为 .bak
+```
+
+## 启动
 
 ### 环境要求
 
 - Node.js 18+
-- npm 或 pnpm
+- pnpm 或 npm
 
-### 安装依赖
-
-```bash
-npm install
-```
-
-### 配置环境变量
-
-复制 `.env.example` 为 `.env` 并填写你的配置：
+### 配置
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env` 文件：
+`.env` 变量：
 
-```env
-# AI LLM 配置
-LLM_API_KEY=your-api-key-here
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL=qwen-turbo
-EMBEDDING_MODEL=text-embedding-v3
-```
+| 变量 | 必填 | 说明 |
+| --- | --- | --- |
+| `LLM_API_KEY` | 是 | OpenAI 兼容 API Key |
+| `LLM_BASE_URL` | 否 | 默认 `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| `LLM_MODEL` | 否 | 对话模型,默认 `qwen-max` |
+| `EMBEDDING_MODEL` | 否 | Embedding 模型,默认 `text-embedding-v3` |
+| `ADMIN_PASSWORD` | 是 | 首次启动引导 admin 账号的密码 |
+| `JWT_SECRET` | 否 | JWT 签名密钥,留空则由 `ADMIN_PASSWORD` 派生 |
 
-> 💡 默认使用阿里云百炼平台，支持任何 OpenAI 兼容的 API
-
-### 开发模式
-
-```bash
-npm run dev
-```
-
-访问 <http://localhost:3000>
-
-### 构建生产版本
+### 命令
 
 ```bash
-npm run build
+npm install        # 安装依赖并 nuxt prepare
+npm run dev        # 开发模式,默认 http://localhost:3000
+npm run build      # 生产构建
+npm run preview    # 预览生产构建
+npm run generate   # 预渲染
+npm test           # 单元测试(vitest)
 ```
 
-### 生成静态站点
+## 数据存储
+
+| 文件 | 来源 | 说明 |
+| --- | --- | --- |
+| `data/curata.db` | `server/core/db.ts` | 用户 / 综述 / papers / 审计日志 / vec0 向量 |
+| `data/users.json` | `server/core/user-store.ts` | 用户表 + PBKDF2 哈希参数 |
+| `data/blog-vectors.json.bak` | `retrieval/migrate-vectors.ts` | 老 JSON 格式备份(若有) |
+
+`.gitignore` 已排除 `data/*.db`、`data/*.bak`、`data/users.json`、`content/articles/*.md`。
+
+## 测试
 
 ```bash
-npm run generate
+npm test                # 一次性跑全量
+npm run test:watch      # 监听模式
 ```
 
-## 📚 使用指南
+覆盖模块：`retrieval/bm25`、`retrieval/vector-db`、`retrieval/query-expansion`、`processors/context-compressor`。
 
-### 1. 添加文献到文章库(可选)
+## 内容扩展
 
-将 Markdown 格式的文献放入 `content/articles/` 目录，作为可复用的内部文献库。后续生成综述时可直接从中选择，无需重复上传。
+向 `content/articles/` 放入 Markdown 文件即可被 `@nuxt/content` 自动收录:
 
 ```markdown
 ---
 title: 文献标题
-description: 文献描述
+description: 简述
 date: 2024-01-15
 tags: [标签1, 标签2]
 ---
 
-# 正文内容
-...
+# 正文
 ```
 
-### 2. 生成文献综述
-
-1. 访问 `/literature-review` 页面
-2. 拖拽或选择 TXT / Markdown / PDF / Word 文件上传
-3. 点击「生成文献综述」按钮
-4. AI 输出五段式内容：研究背景 / 核心内容梳理 / 创新点对比 / 研究趋势
-5. 在「个人思考与启发」一栏补充自己的理解
-
-### 3. 导出与归档
-
-点击「导出 Markdown」即可下载为 `.md` 文件，便于二次排版、插入汇报材料或留档。
-
-### 4. 更新知识库(高级)
-
-如需使用 RAG 知识库问答等辅助功能：
-
-1. 访问 `/blog-vector` 页面
-2. 点击「重新向量化」按钮
-3. 等待处理完成
-
-## 🔧 API 接口
-
-| 接口                       | 方法   | 说明                  |
-| ------------------------ | ---- | ------------------- |
-| `/api/literature-review` | POST | 📚 文献综述生成(核心)       |
-| `/api/posts`             | GET  | 获取文献列表              |
-| `/api/aichat`            | POST | AI 对话(非流式)          |
-| `/api/aichat-stream`     | POST | AI 对话(流式)           |
-| `/api/rag-chat`          | POST | RAG 知识库对话           |
-| `/api/blog-vectorize`    | POST | 文献向量化               |
-| `/api/blog-search`       | GET  | 文献搜索                |
-| `/api/related-posts`     | GET  | 相关文献推荐              |
-
-## 🔮 未来计划
-
-- [ ] PDF / Word 真实文本解析（替代当前仅 TXT/MD 可用）
-- [ ] Map-Reduce 多文献分批处理，支持更多文献一次性综合
-- [ ] 服务端 SQLite 持久化 + 历史综述归档
-- [ ] 真实用户体系 + 服务端权限校验
-- [ ] 导出 Word (.docx) / PPT 模板
-- [ ] GB/T 7714 参考文献格式自动生成
-- [ ] 文献元数据（作者 / 期刊 / 年份）自动抽取
-- [ ] 深色模式支持
+- 集合 `content` 在 `content.config.ts` 中声明,前缀 `/articles`
+- 前端通过 `queryCollection("content").all()` / `.path("/articles/<slug>").first()` 调用
+- 访问 `/blog-vector` 点击「重新向量化」即可重建向量索引

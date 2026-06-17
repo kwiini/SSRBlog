@@ -41,15 +41,6 @@ const PROTECTED: Array<{
     methods: new Set(["DELETE"]),
     perm: "vectorize:delete",
   },
-  // 用户管理
-  { prefix: "/api/users", methods: new Set(["GET"]), perm: "user:list" },
-  { prefix: "/api/users", methods: new Set(["POST"]), perm: "user:create" },
-  {
-    prefix: "/api/users",
-    methods: new Set(["PUT", "PATCH"]),
-    perm: "user:update",
-  },
-  { prefix: "/api/users", methods: new Set(["DELETE"]), perm: "user:delete" },
   // 综述生成(写操作,需要 review:generate)
   {
     prefix: "/api/literature-review",

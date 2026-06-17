@@ -2,7 +2,7 @@
  * RBAC 角色与权限定义
  *
  * 4 个角色:
- *   - admin    : 全部权限(包括用户管理、系统配置)
+ *   - admin    : 全部权限(包括系统配置)
  *   - editor   : 内容创作(博客 CRUD、向量重建、RAG、综述生成、评论)
  *   - reviewer : 阅读 + 综述生成 + 评论(无内容写权限)
  *   - viewer   : 只读(RAG 问答 + 读综述)
@@ -13,7 +13,6 @@
  *   rag:query     RAG 问答
  *   review:*      综述生成/查看
  *   comment:*     评论
- *   user:*        用户管理(只 admin)
  *   system:*      系统配置(只 admin)
  */
 
@@ -31,10 +30,6 @@ export type Permission =
   | "review:generate"
   | "review:read"
   | "comment:create"
-  | "user:list"
-  | "user:create"
-  | "user:update"
-  | "user:delete"
   | "system:config"
   | "system:cache:clear";
 
@@ -54,10 +49,6 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "review:generate",
     "review:read",
     "comment:create",
-    "user:list",
-    "user:create",
-    "user:update",
-    "user:delete",
     "system:config",
     "system:cache:clear",
   ],
@@ -119,10 +110,6 @@ export function isValidPermission(p: string): p is Permission {
     "review:generate",
     "review:read",
     "comment:create",
-    "user:list",
-    "user:create",
-    "user:update",
-    "user:delete",
     "system:config",
     "system:cache:clear",
   ].includes(p);
@@ -144,12 +131,12 @@ export const ROLE_META: Record<
 > = {
   admin: {
     label: "管理员",
-    description: "全部权限,可管理用户和系统配置",
+    description: "全部权限,可管理系统配置",
     rank: 4,
   },
   editor: {
     label: "编辑者",
-    description: "可创建/修改博客、向量、综述,不可管理用户",
+    description: "可创建/修改博客、向量、综述",
     rank: 3,
   },
   reviewer: {
